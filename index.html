@@ -1018,9 +1018,9 @@
   let activeWpKey = 'keywest';
   let wpPhotoIndex = 0;
   let wpEditMode = false;
-  // Wikimedia OSM basemap tiles — free, no API key required, GitHub-safe
-  const OSM_TILE_URL = 'https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}.png';
-  const OSM_ATTRIBUTION = '&copy; <a href="https://wikimediafoundation.org/">Wikimedia</a> &copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+  // OpenStreetMap standard tiles — free, no API key required, GitHub-safe
+  const OSM_TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+  const OSM_ATTRIBUTION = '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
   let mapboxMap = null;
   let isPlaceModeActive = false;
