@@ -1099,6 +1099,7 @@
         zoom: 10,
         attributionControl: false,
         zoomControl: false,
+        dragging: true,
         touchZoom: true,
         scrollWheelZoom: false,
         bounceAtZoomLimits: false
@@ -1121,6 +1122,9 @@
       tileLayer.once('load', () => {
         if (mapEl) mapEl.classList.remove('hidden');
         if (fallback) fallback.classList.add('hidden');
+
+        // Ensure Leaflet recalculates container dimensions
+        mapboxMap.invalidateSize();
 
         // Draw the route polyline
         updateRoutePolyline();
@@ -1208,13 +1212,12 @@
       const icon = L.divIcon({
         html: html,
         className: 'custom-mapbox-marker cursor-pointer select-none',
-        iconAnchor: wp.type === 'active' ? [null, null] : [null, null],
         popupAnchor: [0, 0]
       });
       const marker = L.marker([wp.lat, wp.lng], { icon })
         .addTo(mapboxMap);
       marker.on('click', (e) => {
-        e.originalEvent.stopPropagation();
+        if (e.originalEvent) e.originalEvent.stopPropagation();
         openWaypointModal(key);
       });
       mapboxMarkers[key] = marker;
@@ -1259,13 +1262,12 @@
       const icon = L.divIcon({
         html: html,
         className: 'friend-mapbox-marker cursor-pointer select-none',
-        iconAnchor: [null, null],
         popupAnchor: [0, 0]
       });
       const marker = L.marker([friend.lat, friend.lng], { icon })
         .addTo(mapboxMap);
       marker.on('click', (e) => {
-        e.originalEvent.stopPropagation();
+        if (e.originalEvent) e.originalEvent.stopPropagation();
         showToast(`${friend.name} is nearby on Highway A1A`, 'group');
         if (mapboxMap) {
           mapboxMap.flyTo({ center: [friend.lat, friend.lng], zoom: 12, speed: 1.1 });
