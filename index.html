@@ -159,6 +159,10 @@
     /* Leaflet container clean integration */
     .leaflet-container {
       z-index: 0 !important;
+      touch-action: none;
+    }
+    #map {
+      touch-action: none;
     }
     .leaflet-container .leaflet-marker-icon,
     .leaflet-container .leaflet-marker-shadow {
@@ -220,7 +224,7 @@
 <!-- Interactive Profile Avatar -->
 <div class="relative">
 <button class="relative w-9 h-9 rounded-full p-0.5 bg-white shadow-md border border-[#CBDDE1] overflow-hidden transition active:scale-90 hover:ring-3 focus:outline-none ring-2 ring-[#23CED9] group" onclick="openProfileModal()" title="View &amp; Edit Travel Profile">
-<img alt="User traveler avatar" class="w-full h-full object-cover rounded-full" id="header-user-avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCAXhG9n4V-LjXukVcQ1gP70SK5APz9JqpLdpUV8XUSOzPhcZpd2RPRLICcqPlGh4-CTR9HI6foHExCCQRYQ8HAUiXLFT6IWX5BTsGSXeFG9hPZbRUPmI2V8c7Rnz-Ht-y0tHFvITuWSp8wjJGiqbFlHxMd7RaicnfUjBeUCVNg42ovFrJhKV-C5hTI7ulZ-ID-7JSD79bd1WKJsBEAfYTBayZZqG8Rm8FTp991eng"/>
+<img alt="User traveler avatar" class="w-full h-full object-cover rounded-full" id="header-user-avatar" src="https://images.unsplash.com/photo-1544620348-c4fd4a3d5957?auto=format&fit=crop&w=400&q=80"/>
 </button>
 <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-[#A1CCA6] border-2 border-white flex items-center justify-center pointer-events-none" title="Online Co-author">
 <span class="w-1 h-1 bg-white rounded-full"></span>
@@ -280,7 +284,7 @@
 <div class="mb-2.5 px-3 py-2 rounded-2xl bg-[#FFFDF4] border border-[#F9D779]/50 flex items-center justify-between cursor-pointer hover:bg-[#FFF9E6] transition" onclick="openInviteModal()">
 <div class="flex items-center space-x-2.5">
 <div class="flex -space-x-1.5 overflow-hidden">
-<img alt="User avatar" class="inline-block h-6 w-6 rounded-full ring-2 ring-white object-cover companion-sync-avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCAXhG9n4V-LjXukVcQ1gP70SK5APz9JqpLdpUV8XUSOzPhcZpd2RPRLICcqPlGh4-CTR9HI6foHExCCQRYQ8HAUiXLFT6IWX5BTsGSXeFG9hPZbRUPmI2V8c7Rnz-Ht-y0tHFvITuWSp8wjJGiqbFlHxMd7RaicnfUjBeUCVNg42ovFrJhKV-C5hTI7ulZ-ID-7JSD79bd1WKJsBEAfYTBayZZqG8Rm8FTp991eng"/>
+<img alt="User avatar" class="inline-block h-6 w-6 rounded-full ring-2 ring-white object-cover companion-sync-avatar" src="https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=400&q=80"/>
 <div class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-[#23CED9] ring-2 ring-white text-[9px] font-extrabold text-white">LK</div>
 <div class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-[#FCA47C] ring-2 ring-white text-[9px] font-extrabold text-white">+2</div>
 </div>
@@ -351,7 +355,7 @@
 <!-- Avatar with camera overlay -->
 <div class="relative shrink-0">
 <div class="w-20 h-20 rounded-full p-1 bg-white shadow-md border-2 border-[#23CED9] overflow-hidden">
-<img alt="Emma Harrison Avatar" class="w-full h-full object-cover rounded-full" id="profile-modal-avatar-preview" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCAXhG9n4V-LjXukVcQ1gP70SK5APz9JqpLdpUV8XUSOzPhcZpd2RPRLICcqPlGh4-CTR9HI6foHExCCQRYQ8HAUiXLFT6IWX5BTsGSXeFG9hPZbRUPmI2V8c7Rnz-Ht-y0tHFvITuWSp8wjJGiqbFlHxMd7RaicnfUjBeUCVNg42ovFrJhKV-C5hTI7ulZ-ID-7JSD79bd1WKJsBEAfYTBayZZqG8Rm8FTp991eng"/>
+<img alt="User Avatar" class="w-full h-full object-cover rounded-full" id="profile-modal-avatar-preview" src="https://images.unsplash.com/photo-1528502311325-256fc4e9977b?auto=format&fit=crop&w=400&q=80"/>
 </div>
 <button class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#097C87] text-white shadow-md border-2 border-white flex items-center justify-center hover:bg-[#07666f] active:scale-95 transition" onclick="triggerAvatarUploadTrigger()" title="Change Profile Photo">
 <span class="material-symbols-outlined text-[14px] text-[#23CED9]">photo_camera</span>
@@ -382,24 +386,24 @@
 </div>
 <div class="flex items-center justify-between pt-1">
 <!-- Preset 1 (Beach/Key West Explorer - Default) -->
-<button class="w-11 h-11 rounded-full p-0.5 border-2 border-[#097C87] ring-2 ring-[#23CED9]/50 overflow-hidden active:scale-90 transition relative" onclick="selectAvatarPreset('https://lh3.googleusercontent.com/aida-public/AB6AXuCAXhG9n4V-LjXukVcQ1gP70SK5APz9JqpLdpUV8XUSOzPhcZpd2RPRLICcqPlGh4-CTR9HI6foHExCCQRYQ8HAUiXLFT6IWX5BTsGSXeFG9hPZbRUPmI2V8c7Rnz-Ht-y0tHFvITuWSp8wjJGiqbFlHxMd7RaicnfUjBeUCVNg42ovFrJhKV-C5hTI7ulZ-ID-7JSD79bd1WKJsBEAfYTBayZZqG8Rm8FTp991eng', 'Coastal Traveler')">
-<img alt="Preset 1" class="w-full h-full object-cover rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCAXhG9n4V-LjXukVcQ1gP70SK5APz9JqpLdpUV8XUSOzPhcZpd2RPRLICcqPlGh4-CTR9HI6foHExCCQRYQ8HAUiXLFT6IWX5BTsGSXeFG9hPZbRUPmI2V8c7Rnz-Ht-y0tHFvITuWSp8wjJGiqbFlHxMd7RaicnfUjBeUCVNg42ovFrJhKV-C5hTI7ulZ-ID-7JSD79bd1WKJsBEAfYTBayZZqG8Rm8FTp991eng"/>
+<button class="w-11 h-11 rounded-full p-0.5 border-2 border-[#097C87] ring-2 ring-[#23CED9]/50 overflow-hidden active:scale-90 transition relative" onclick="selectAvatarPreset('https://images.unsplash.com/photo-1536434575279-1a6e2b40d2f0?auto=format&fit=crop&w=400&q=80', 'Coastal Traveler')">
+<img alt="Preset 1" class="w-full h-full object-cover rounded-full" src="https://images.unsplash.com/photo-1536434575279-1a6e2b40d2f0?auto=format&fit=crop&w=400&q=80"/>
 </button>
 <!-- Preset 2 (Mountain Explorer) -->
-<button class="w-11 h-11 rounded-full p-0.5 border-2 border-transparent hover:border-[#097C87] overflow-hidden active:scale-90 transition" onclick="selectAvatarPreset('https://lh3.googleusercontent.com/aida-public/AB6AXuDGuzE2m0gZOjoIi7aZJf5ZFs3hdabiwZonwlIHQXAaC_pzTPB4pZ-m-yC3IYDEkthPE4ocfSNQcoKtBRTGWZVdND9S3cNzAozmSxxnOu9U9TSFTZsB8dEyBVmcqoA_qcjEvgJwm2fBOiwys6HvVxfZXTTB-vCuLsXHeYNlzzPX03QSKnxCEhx6BuOt7ylyuq9EhZs2Ys93b1RIOK4xn9RqiRTzLXCRA-a2WiXxrgc', 'Alpine Hiker')">
-<img alt="Preset 2" class="w-full h-full object-cover rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDGuzE2m0gZOjoIi7aZJf5ZFs3hdabiwZonwlIHQXAaC_pzTPB4pZ-m-yC3IYDEkthPE4ocfSNQcoKtBRTGWZVdND9S3cNzAozmSxxnOu9U9TSFTZsB8dEyBVmcqoA_qcjEvgJwm2fBOiwys6HvVxfZXTTB-vCuLsXHeYNlzzPX03QSKnxCEhx6BuOt7ylyuq9EhZs2Ys93b1RIOK4xn9RqiRTzLXCRA-a2WiXxrgc"/>
+<button class="w-11 h-11 rounded-full p-0.5 border-2 border-transparent hover:border-[#097C87] overflow-hidden active:scale-90 transition" onclick="selectAvatarPreset('https://images.unsplash.com/photo-1516035069371-29a1b2440326?auto=format&fit=crop&w=400&q=80', 'Alpine Hiker')">
+<img alt="Preset 2" class="w-full h-full object-cover rounded-full" src="https://images.unsplash.com/photo-1516035069371-29a1b2440326?auto=format&fit=crop&w=400&q=80"/>
 </button>
 <!-- Preset 3 (Backpacker Nomad) -->
-<button class="w-11 h-11 rounded-full p-0.5 border-2 border-transparent hover:border-[#097C87] overflow-hidden active:scale-90 transition" onclick="selectAvatarPreset('https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&amp;fit=crop&amp;w=400&amp;q=80', 'Backpacker Nomad')">
-<img alt="Preset 3" class="w-full h-full object-cover rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCSejVtUlnQ7l8uWpWef78sNhQRvY9Vt3ejmbMJrV1Bfz1rMrgkJ6snvmdyIA4qRNMhaygRGWAMkZol9AhyT7n20VqzlcgEHMtN2g2t6IxdT2vDJnifoHqWpAPLomd3XNM5JA8epGAwmGEVUxUoDQJ2L5zoM480qJ0FfF8XGgLPJPYrWBFwPcBbREUIwzEFGreFcwfnbvcpWCJxLGJ4E4ii7QinpyPZHgFc4ISzrKc"/>
+<button class="w-11 h-11 rounded-full p-0.5 border-2 border-transparent hover:border-[#097C87] overflow-hidden active:scale-90 transition" onclick="selectAvatarPreset('https://images.unsplash.com/photo-1518020382113-a7e6dd6870e8?auto=format&fit=crop&w=400&q=80', 'Backpacker Nomad')">
+<img alt="Preset 3" class="w-full h-full object-cover rounded-full" src="https://images.unsplash.com/photo-1518020382113-a7e6dd6870e8?auto=format&fit=crop&w=400&q=80"/>
 </button>
 <!-- Preset 4 (Wanderer Solo) -->
-<button class="w-11 h-11 rounded-full p-0.5 border-2 border-transparent hover:border-[#097C87] overflow-hidden active:scale-90 transition" onclick="selectAvatarPreset('https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&amp;fit=crop&amp;w=400&amp;q=80', 'Roadtripper')">
-<img alt="Preset 4" class="w-full h-full object-cover rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQ5ptAMGgl1nUCDQ00kR6TSUdmM2U8-fwO_Ru23dYhz7KDBnoCuTI89E6keCGviXjJylWHe1YBrKAhIo-UCmOkL4MmfaqA9sxAB8wbfjDPHfgIVsoUzTpx9nriAiy7uI62I86leGAuJcbWeq639pxkjR-lRAKIDlYyhOyDChkXzbfqFRu041qhnmnkI3HBt0feN4mxR2rZtExC5XsqphevhA9b3uhmZtAucpvGCLs"/>
+<button class="w-11 h-11 rounded-full p-0.5 border-2 border-transparent hover:border-[#097C87] overflow-hidden active:scale-90 transition" onclick="selectAvatarPreset('https://images.unsplash.com/photo-1541897879062-c09c9f395623?auto=format&fit=crop&w=400&q=80', 'Roadtripper')">
+<img alt="Preset 4" class="w-full h-full object-cover rounded-full" src="https://images.unsplash.com/photo-1541897879062-c09c9f395623?auto=format&fit=crop&w=400&q=80"/>
 </button>
 <!-- Preset 5 (Island Camper) -->
-<button class="w-11 h-11 rounded-full p-0.5 border-2 border-transparent hover:border-[#097C87] overflow-hidden active:scale-90 transition" onclick="selectAvatarPreset('https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&amp;fit=crop&amp;w=400&amp;q=80', 'Island Nomad')">
-<img alt="Preset 5" class="w-full h-full object-cover rounded-full" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZ5SW0x_32oxBZAKqIdeIKeAU7-q1wOREasSh-4QVSBIRPlrpHmPymLUHdStxCwiOzp2syAZYFGnGyaDXsD4NZfVh0p2thDm3mAN070dXbCi44TxJANajP6D--VrkO5oS79LjKOfG-swik7e6Xv87AcPGN0BsOyHVD8orSEApzZJmoJozhGwXJUK6XJyoTizEAyE568HdFrdCqPJRAj4LZgIExFkQi2ZfI6XmskS0"/>
+<button class="w-11 h-11 rounded-full p-0.5 border-2 border-transparent hover:border-[#097C87] overflow-hidden active:scale-90 transition" onclick="selectAvatarPreset('https://images.unsplash.com/photo-1532738560270-7c974780680c?auto=format&fit=crop&w=400&q=80', 'Island Nomad')">
+<img alt="Preset 5" class="w-full h-full object-cover rounded-full" src="https://images.unsplash.com/photo-1532738560270-7c974780680c?auto=format&fit=crop&w=400&q=80"/>
 </button>
 </div>
 </div>
@@ -530,7 +534,7 @@
 <!-- User Profile Summary in Header -->
 <div class="flex items-center justify-between p-2.5 rounded-2xl bg-white border border-[#CBDDE1]/70 shadow-xs cursor-pointer hover:border-[#097C87] transition" onclick="toggleTripsDrawer(false); openProfileModal();">
 <div class="flex items-center space-x-2.5">
-<img alt="Emma Harrison Profile" class="w-9 h-9 rounded-full object-cover ring-2 ring-[#23CED9] drawer-profile-avatar" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCAXhG9n4V-LjXukVcQ1gP70SK5APz9JqpLdpUV8XUSOzPhcZpd2RPRLICcqPlGh4-CTR9HI6foHExCCQRYQ8HAUiXLFT6IWX5BTsGSXeFG9hPZbRUPmI2V8c7Rnz-Ht-y0tHFvITuWSp8wjJGiqbFlHxMd7RaicnfUjBeUCVNg42ovFrJhKV-C5hTI7ulZ-ID-7JSD79bd1WKJsBEAfYTBayZZqG8Rm8FTp991eng"/>
+<img alt="User Profile" class="w-9 h-9 rounded-full object-cover ring-2 ring-[#23CED9] drawer-profile-avatar" src="https://images.unsplash.com/photo-1536434575279-1a6e2b40d2f0?auto=format&fit=crop&w=400&q=80"/>
 <div>
 <h4 class="text-xs font-black text-[#0E1E21] leading-tight" id="drawer-user-name">Emma Harrison</h4>
 <span class="text-[10px] font-semibold text-[#097C87]">14 journeys · 186 posts</span>
@@ -947,7 +951,8 @@
       lng: -80.6077,
       lat: 28.3922,
       type: 'default',
-      icon: 'rocket_launch'
+      icon: 'rocket_launch',
+      poiIcon: 'rocket_launch'
     },
     palmbeach: {
       id: 'palmbeach',
@@ -966,7 +971,8 @@
       lng: -80.0364,
       lat: 26.7056,
       type: 'default',
-      icon: 'beach_access'
+      icon: 'beach_access',
+      poiIcon: 'beach_access'
     },
     miami: {
       id: 'miami',
@@ -986,7 +992,8 @@
       lat: 25.7781,
       type: 'badge',
       count: '4',
-      icon: 'photo_camera'
+      icon: 'photo_camera',
+      poiIcon: 'photo_camera'
     },
     keywest: {
       id: 'keywest',
@@ -1008,7 +1015,8 @@
       lng: -81.8048,
       lat: 24.5557,
       type: 'active',
-      icon: 'location_on'
+      icon: 'location_on',
+      poiIcon: 'location_on'
     }
   };
 
@@ -1030,9 +1038,9 @@
   let pendingCustomCoords = { lng: -80.6278, lat: 24.9247 };
   let memoryPhotoUrl = null;
   const FRIENDS = [
-    { id: 'friend-emma', name: 'Emma', lng: -81.75, lat: 24.62, avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCAXhG9n4V-LjXukVcQ1gP70SK5APz9JqpLdpUV8XUSOzPhcZpd2RPRLICcqPlGh4-CTR9HI6foHExCCQRYQ8HAUiXLFT6IWX5BTsGSXeFG9hPZbRUPmI2V8c7Rnz-Ht-y0tHFvITuWSp8wjJGiqbFlHxMd7RaicnfUjBeUCVNg42ovFrJhKV-C5hTI7ulZ-ID-7JSD79bd1WKJsBEAfYTBayZZqG8Rm8FTp991eng' },
-    { id: 'friend-liam', name: 'Liam', lng: -81.85, lat: 24.50, avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377f88?auto=format&fit=crop&w=120&q=80' },
-    { id: 'friend-sarah', name: 'Sarah', lng: -81.90, lat: 24.48, avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&w=120&q=80' }
+    { id: 'friend-emma', name: 'Emma', lng: -81.75, lat: 24.62, avatar: 'https://images.unsplash.com/photo-1536434575279-1a6e2b40d2f0?auto=format&fit=crop&w=400&q=80' },
+    { id: 'friend-liam', name: 'Liam', lng: -81.85, lat: 24.50, avatar: 'https://images.unsplash.com/photo-1517849845537-4d257902454a?auto=format&fit=crop&w=400&q=80' },
+    { id: 'friend-sarah', name: 'Sarah', lng: -81.90, lat: 24.48, avatar: 'https://images.unsplash.com/photo-1528502311325-256fc4e9977b?auto=format&fit=crop&w=400&q=80' }
   ];
 
   let friendsLayerVisible = true;
@@ -1160,42 +1168,33 @@
   }
 
   function createMarkerHtml(data, key) {
-    let html = '';
+    const poiColor = data.type === 'active' ? '#FCA47C' : (key === 'palmbeach' ? '#23CED9' : '#097C87');
+    const poiIcon = data.poiIcon || data.icon || 'place';
+
     if (data.type === 'active') {
-      html = `
-        <div class="relative flex flex-col items-center cursor-pointer hover:scale-105 transition-transform">
-          <div class="absolute -inset-3 bg-[#FCA47C]/40 rounded-full blur-xs pulse-ring pointer-events-none"></div>
-          <div class="relative flex items-center space-x-1.5 bg-gradient-to-r from-[#097C87] to-[#07666f] text-white px-3 py-1.5 rounded-full shadow-xl border-2 border-white">
-            <span class="material-symbols-outlined text-[13px] text-[#23CED9]">location_on</span>
-            <span class="text-[10px] font-black tracking-tight whitespace-nowrap">${data.title}</span>
-            <span class="w-1.5 h-1.5 rounded-full bg-[#FCA47C] animate-ping"></span>
+      return `
+        <div class="relative flex flex-col items-center cursor-pointer hover:scale-110 transition-transform" title="${data.title}">
+          <div class="absolute -inset-2.5 bg-[#FCA47C]/40 rounded-full blur-xs pulse-ring pointer-events-none"></div>
+          <div class="relative w-10 h-10 rounded-full bg-gradient-to-r from-[#097C87] to-[#07666f] flex items-center justify-center shadow-xl border-2 border-white text-white">
+            <span class="material-symbols-outlined text-[16px]">${poiIcon}</span>
           </div>
           <div class="w-2.5 h-2.5 bg-[#097C87] rotate-45 -mt-1 border-r border-b border-white"></div>
         </div>
       `;
     } else if (data.type === 'badge') {
-      html = `
-        <div class="relative cursor-pointer hover:scale-105 active:scale-95 transition-transform">
-          <div class="flex items-center space-x-1 bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-full shadow-lg border border-[#CBDDE1]">
-            <span class="material-symbols-outlined text-[12px] text-[#FCA47C]">${data.icon || 'star'}</span>
-            <span class="text-[10px] font-extrabold text-[#0E1E21] tracking-tight whitespace-nowrap">${data.title}</span>
-            <span class="text-[8px] font-bold text-white bg-[#FCA47C] px-1 py-0.5 rounded-full">${data.count || 'NEW'}</span>
-          </div>
+      return `
+        <div class="relative w-9 h-9 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center shadow-lg border border-[#CBDDE1] cursor-pointer hover:scale-110 transition-transform" title="${data.title}">
+          <span class="material-symbols-outlined text-[15px] text-[#FCA47C]">${poiIcon}</span>
+          <span class="absolute -right-1 -top-1 w-3 h-3 rounded-full bg-[#FCA47C] text-[7px] font-bold text-white flex items-center justify-center border border-white">${data.count || '●'}</span>
         </div>
       `;
     } else {
-      const color = key === 'palmbeach' ? '#23CED9' : '#097C87';
-      html = `
-        <div class="relative cursor-pointer hover:scale-105 active:scale-95 transition-transform">
-          <div class="flex items-center space-x-1 bg-white/95 backdrop-blur-md px-2.5 py-1 rounded-full shadow-lg border border-[#CBDDE1]">
-            <span class="w-2.5 h-2.5 rounded-full shrink-0 ring-2 ring-white shadow-xs" style="background-color: ${color}"></span>
-            <span class="text-[10px] font-extrabold text-[#097C87] tracking-tight whitespace-nowrap">${data.title}</span>
-            <span class="material-symbols-outlined text-[12px]" style="color: ${color}">${data.icon}</span>
-          </div>
+      return `
+        <div class="relative w-8 h-8 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center shadow-lg border border-[#CBDDE1] cursor-pointer hover:scale-110 transition-transform" title="${data.title}">
+          <span class="material-symbols-outlined text-[14px] text-[#097C87]">${poiIcon}</span>
         </div>
       `;
     }
-    return html;
   }
 
   function renderAllMapboxMarkers() {
@@ -1786,6 +1785,11 @@
         closed = true;
       }
       if (closed) e.preventDefault();
+    });
+
+    // Keep map sized correctly on resize / orientation change
+    window.addEventListener('resize', () => {
+      if (mapboxMap) mapboxMap.invalidateSize();
     });
   });
 </script>
