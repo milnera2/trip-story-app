@@ -175,7 +175,7 @@
 <!-- Mobile Viewport Container (390px width feel, full height) -->
 <div class="relative w-full h-screen max-w-[390px] mx-auto overflow-hidden bg-surface flex flex-col justify-between shadow-2xl" id="mobile-viewport">
 <!-- FULLSCREEN INTERACTIVE LEAFLET MAP CANVAS (OpenStreetMap tiles, no token) -->
-<div class="absolute inset-0 z-0 overflow-hidden" id="map">
+<div class="absolute inset-0 z-0" id="map">
 </div>
 <!-- Fallback shown if Leaflet/OpenStreetMap tiles fail to load -->
 <div class="absolute inset-0 z-0 hidden bg-[#097C87] flex flex-col items-center justify-center text-white" id="map-fallback">
@@ -1111,6 +1111,9 @@
         scrollWheelZoom: false,
         bounceAtZoomLimits: false
       });
+
+      // Ensure Leaflet calculates correct container size immediately
+      mapboxMap.invalidateSize();
 
       let tileLayer = L.tileLayer(OSM_TILE_URL, {
         attribution: OSM_ATTRIBUTION,
