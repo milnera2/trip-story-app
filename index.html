@@ -163,6 +163,15 @@
     }
     #map {
       touch-action: none;
+      position: absolute;
+      inset: 0;
+    }
+    /* Ensure the map canvas receives drag events across its full area */
+    .leaflet-pane.leaflet-map-pane {
+      z-index: 0 !important;
+    }
+    .leaflet-pane.leaflet-tile-pane {
+      z-index: 1 !important;
     }
     .leaflet-container .leaflet-marker-icon,
     .leaflet-container .leaflet-marker-shadow {
@@ -187,7 +196,7 @@
     Map tiles are temporarily unavailable. Check your connection and retry.<br/>
     <span class="text-[#23CED9]">OpenStreetMap</span> tiles load automatically — no token needed.
   </p>
-  <button class="mt-4 px-4 py-2 rounded-xl bg-white text-[#097C87] text-[11px] font-extrabold hover:bg-[#23CED9]/20 transition" onclick="retryMapboxLoad()">
+  <button class="mt-4 px-4 py-2 rounded-xl bg-white text-[#097C87] text-[11px] font-extrabold hover:bg-[#23CED9]/20 transition" onclick="retryMapLoad()">
     Retry loading map
   </button>
 </div>
@@ -929,7 +938,7 @@
 </button>
 </div>
 </div>
-<!-- MAPBOX GL JS INTEGRATION SCRIPT & INTERACTIVITY -->
+<!-- LEAFLET MAP INTEGRATION SCRIPT & INTERACTIVITY -->
 <script>
   // WAYPOINTS DATA WITH REAL COORDINATES & ORDER SEQUENCE
   const WAYPOINTS = {
@@ -1029,9 +1038,9 @@
   const OSM_TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
   const OSM_ATTRIBUTION = '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
-  let mapboxMap = null;
+  let map = null;
   let isPlaceModeActive = false;
-  let mapboxMarkers = {};
+  let mapMarkers = {};
 
   // Selected quick preset coords (defaults to Islamorada)
   let pendingCustomCoords = { lng: -80.6278, lat: 24.9247 };
@@ -1043,7 +1052,7 @@
   ];
 
   let friendsLayerVisible = true;
-  let mapboxFriendMarkers = {};
+  let mapFriendMarkers = {};
 
   // Build sequential polyline coordinates connecting all markers in order
   function getSequentialRouteCoordinates() {
@@ -1063,12 +1072,12 @@
   let routeDashed = null;
 
   function updateRoutePolyline() {
-    if (!mapboxMap) return;
+    if (!map) return;
     const coords = getSequentialRouteCoordinates();
 
-    if (routePolyline) mapboxMap.removeLayer(routePolyline);
-    if (routeGlow) mapboxMap.removeLayer(routeGlow);
-    if (routeDashed) mapboxMap.removeLayer(routeDashed);
+    if (routePolyline) map.removeLayer(routePolyline);
+    if (routeGlow) map.removeLayer(routeGlow);
+    if (routeDashed) map.removeLayer(routeDashed);
 
     routeGlow = L.polyline(coords, {
       color: '#23CED9',
@@ -1076,7 +1085,7 @@
       opacity: 0.35,
       lineJoin: 'round',
       lineCap: 'round'
-    }).addTo(mapboxMap).bringToBack();
+    }).addTo(map).bringToBack();
 
     routePolyline = L.polyline(coords, {
       color: '#FCA47C',
@@ -1084,7 +1093,7 @@
       opacity: 0.95,
       lineJoin: 'round',
       lineCap: 'round'
-    }).addTo(mapboxMap);
+    }).addTo(map);
 
     routeDashed = L.polyline(coords, {
       color: '#097C87',
@@ -1093,15 +1102,15 @@
       lineJoin: 'round',
       lineCap: 'round',
       dashArray: '3, 4'
-    }).addTo(mapboxMap).bringToFront();
+    }).addTo(map).bringToFront();
   }
 
-  function initMapboxMap() {
+  function initMap() {
     const mapEl = document.getElementById('map');
     const fallback = document.getElementById('map-fallback');
 
     try {
-      mapboxMap = L.map('map', {
+      map = L.map('map', {
         center: [24.5557, -81.8048], // [lat, lng]
         zoom: 10,
         attributionControl: false,
@@ -1113,12 +1122,12 @@
       });
 
       // Ensure Leaflet calculates correct container size immediately
-      mapboxMap.invalidateSize();
+      map.invalidateSize();
 
       let tileLayer = L.tileLayer(OSM_TILE_URL, {
         attribution: OSM_ATTRIBUTION,
         maxZoom: 19
-      }).addTo(mapboxMap);
+      }).addTo(map);
 
       // If tiles fail to load, show the fallback screen
       tileLayer.on('tileerror', (err, tile) => {
@@ -1134,18 +1143,18 @@
         if (fallback) fallback.classList.add('hidden');
 
         // Ensure Leaflet recalculates container dimensions
-        mapboxMap.invalidateSize();
+        map.invalidateSize();
 
         // Draw the route polyline
         updateRoutePolyline();
 
         // Render custom DOM markers
-        renderAllMapboxMarkers();
+        renderAllMapMarkers();
         renderAllFriendsMarkers();
       });
 
       // Map tap handler for Placing Marker mode
-      mapboxMap.on('click', function(e) {
+      map.on('click', function(e) {
         if (isPlaceModeActive) {
           handleMapPlacedStop(e.latlng);
         }
@@ -1161,12 +1170,12 @@
     }
   }
 
-  function retryMapboxLoad() {
+  function retryMapLoad() {
     const fallback = document.getElementById('map-fallback');
     if (fallback) fallback.classList.add('hidden');
     const mapEl = document.getElementById('map');
     if (mapEl) mapEl.classList.remove('hidden');
-    initMapboxMap();
+    initMap();
   }
 
   function createMarkerHtml(data, key) {
@@ -1199,12 +1208,12 @@
     }
   }
 
-  function renderAllMapboxMarkers() {
+  function renderAllMapMarkers() {
     // Clear existing markers
-    Object.keys(mapboxMarkers).forEach(k => {
-      if (mapboxMarkers[k]) mapboxMarkers[k].remove();
+    Object.keys(mapMarkers).forEach(k => {
+      if (mapMarkers[k]) mapMarkers[k].remove();
     });
-    mapboxMarkers = {};
+    mapMarkers = {};
 
     waypointOrder.forEach(key => {
       const wp = WAYPOINTS[key];
@@ -1216,12 +1225,12 @@
         popupAnchor: [0, 0]
       });
       const marker = L.marker([wp.lat, wp.lng], { icon })
-        .addTo(mapboxMap);
+        .addTo(map);
       marker.on('click', (e) => {
         if (e.originalEvent) e.originalEvent.stopPropagation();
         openWaypointModal(key);
       });
-      mapboxMarkers[key] = marker;
+      mapMarkers[key] = marker;
     });
 
     // Update stop counter badge
@@ -1250,11 +1259,11 @@
   }
 
   function renderAllFriendsMarkers() {
-    if (!mapboxMap) return;
-    Object.keys(mapboxFriendMarkers).forEach(k => {
-      if (mapboxFriendMarkers[k]) mapboxFriendMarkers[k].remove();
+    if (!map) return;
+    Object.keys(mapFriendMarkers).forEach(k => {
+      if (mapFriendMarkers[k]) mapFriendMarkers[k].remove();
     });
-    mapboxFriendMarkers = {};
+    mapFriendMarkers = {};
 
     if (!friendsLayerVisible) return;
 
@@ -1266,15 +1275,15 @@
         popupAnchor: [0, 0]
       });
       const marker = L.marker([friend.lat, friend.lng], { icon })
-        .addTo(mapboxMap);
+        .addTo(map);
       marker.on('click', (e) => {
         if (e.originalEvent) e.originalEvent.stopPropagation();
         showToast(`${friend.name} is nearby on Highway A1A`, 'group');
-        if (mapboxMap) {
-          mapboxMap.flyTo({ center: [friend.lat, friend.lng], zoom: 12, speed: 1.1 });
+        if (map) {
+          map.flyTo({ center: [friend.lat, friend.lng], zoom: 12, speed: 1.1 });
         }
       });
-      mapboxFriendMarkers[friend.id] = marker;
+      mapFriendMarkers[friend.id] = marker;
     });
   }
 
@@ -1285,27 +1294,27 @@
   }
 
   function zoomInMap() {
-    if (mapboxMap) {
-      mapboxMap.zoomIn();
-      showToast(`Zoomed In (${mapboxMap.getZoom().toFixed(1)})`, 'zoom_in');
+    if (map) {
+      map.zoomIn();
+      showToast(`Zoomed In (${map.getZoom().toFixed(1)})`, 'zoom_in');
     }
   }
 
   function zoomOutMap() {
-    if (mapboxMap) {
-      mapboxMap.zoomOut();
-      showToast(`Zoomed Out (${mapboxMap.getZoom().toFixed(1)})`, 'zoom_out');
+    if (map) {
+      map.zoomOut();
+      showToast(`Zoomed Out (${map.getZoom().toFixed(1)})`, 'zoom_out');
     }
   }
 
   function centerMapOnCurrentPin() {
-    if (!mapboxMap) return;
+    if (!map) return;
     const target = WAYPOINTS.keywest || WAYPOINTS[waypointOrder[waypointOrder.length - 1]];
     if (!target) return;
     const lat = target.lat + 0.05;
     const lng = target.lng;
     if (!isFinite(lat) || !isFinite(lng)) return;
-    mapboxMap.flyTo({
+    map.flyTo({
       center: [lat, lng],
       zoom: 10,
       speed: 1.2
@@ -1335,10 +1344,10 @@
     updateWaypointPhotoCounter();
 
     document.getElementById('waypoint-modal').classList.remove('hidden');
-    if (mapboxMap) {
-      mapboxMap.flyTo({
+    if (map) {
+      map.flyTo({
         center: [data.lat + 0.03, data.lng],
-        zoom: Math.max(mapboxMap.getZoom(), 10.5),
+        zoom: Math.max(map.getZoom(), 10.5),
         speed: 1.2
       });
     }
@@ -1441,7 +1450,7 @@
     const idx = waypointOrder.indexOf(wpKey);
     if (idx > -1) waypointOrder.splice(idx, 1);
     delete WAYPOINTS[wpKey];
-    renderAllMapboxMarkers();
+    renderAllMapMarkers();
     updateRoutePolyline();
     closeWaypointModal();
     const remaining = waypointOrder.length;
@@ -1527,7 +1536,7 @@
     };
 
     insertStopSequentially(newId, lngLat.lat);
-    renderAllMapboxMarkers();
+    renderAllMapMarkers();
     updateRoutePolyline();
 
     togglePlaceMarkerMode(false);
@@ -1560,12 +1569,12 @@
     };
 
     insertStopSequentially(newId, lat);
-    renderAllMapboxMarkers();
+    renderAllMapMarkers();
     updateRoutePolyline();
 
     closeAddStopModal();
     showToast(`Connected "${name}" to Florida Coastal Trip route!`, 'route');
-    mapboxMap.flyTo({ center: [lat + 0.03, lng], zoom: 10.5 });
+    map.flyTo({ center: [lat + 0.03, lng], zoom: 10.5 });
   }
 
   // ================= PROFILE & AVATAR CHANGER =================
@@ -1762,9 +1771,9 @@
     }, 2800);
   }
 
-  // Initialize Mapbox map on window load
+  // Initialize Leaflet map on window load
   window.addEventListener('DOMContentLoaded', () => {
-    initMapboxMap();
+    initMap();
 
     // Accessibility: Escape key closes open modals / drawer
     window.addEventListener('keydown', (e) => {
@@ -1791,7 +1800,7 @@
 
     // Keep map sized correctly on resize / orientation change
     window.addEventListener('resize', () => {
-      if (mapboxMap) mapboxMap.invalidateSize();
+      if (map) map.invalidateSize();
     });
   });
 </script>
