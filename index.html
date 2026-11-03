@@ -2,15 +2,13 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
 <title>WayStory - Travel Tracker</title>
-<!-- Tailwind via CDN for mockup speed; for production install as PostCSS plugin per https://tailwindcss.com/docs/installation -->
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<!-- Leaflet JS & CSS (no access token required — OpenStreetMap tiles, GitHub-safe) -->
 <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
@@ -57,14 +55,15 @@
     --surface-container-lowest: #0F2125;
     --on-surface: #E8F2F4;
   }
-  body {
+  html, body {
+    width: 100%;
+    height: 100dvh;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
     -webkit-font-smoothing: antialiased;
     overscroll-behavior: none;
-    background-color: var(--surface-container-lowest);
-    color: var(--on-surface);
-  }
-  html.dark body {
     background-color: var(--surface-container-lowest);
     color: var(--on-surface);
   }
@@ -130,7 +129,6 @@
   .teal-glow {
     box-shadow: 0 8px 20px -4px rgba(9, 124, 135, 0.45);
   }
-  /* Pulse ring on current location */
   @keyframes pulseRing {
     0% { transform: scale(0.95); opacity: 0.9; }
     50% { transform: scale(1.35); opacity: 0.2; }
@@ -139,7 +137,6 @@
   .pulse-ring {
     animation: pulseRing 2s ease-in-out infinite;
   }
-  /* Smooth modal transitions */
   .modal-backdrop {
     background: rgba(14, 30, 33, 0.45);
     backdrop-filter: blur(5px);
@@ -152,11 +149,9 @@
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  /* Placing mode cursor */
   .placing-mode-cursor {
     cursor: crosshair !important;
   }
-  /* Leaflet container clean integration */
   .leaflet-container {
     z-index: 0 !important;
     touch-action: none;
@@ -172,744 +167,751 @@
     inset: 0;
     pointer-events: auto;
   }
-  /* Allow custom divIcon markers to render cleanly without default white box */
   .custom-mapbox-marker,
   .friend-mapbox-marker {
     background: transparent !important;
     border: none !important;
   }
+  .safe-top {
+    padding-top: max(1rem, env(safe-area-inset-top));
+  }
+  .safe-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
 </style>
 </head>
-<body class="bg-slate-900 text-[#0E1E21] select-none overflow-hidden m-0 p-0 flex items-center justify-center min-h-screen">
-<!-- Mobile Viewport Container (390px width feel, full height) -->
-<div class="relative w-full h-screen max-w-[390px] mx-auto overflow-hidden bg-surface flex flex-col justify-between shadow-2xl" id="mobile-viewport">
-<!-- FULLSCREEN INTERACTIVE LEAFLET MAP CANVAS (OpenStreetMap tiles, no token) -->
-<div class="absolute inset-0 z-0" id="map">
-</div>
-<!-- Fallback shown if Leaflet/OpenStreetMap tiles fail to load -->
-<div class="absolute inset-0 z-0 hidden bg-[#097C87] flex flex-col items-center justify-center text-white" id="map-fallback">
-  <div class="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center mb-3 border-4 border-white/30">
-    <span class="material-symbols-outlined text-[40px] text-white">map</span>
+<body class="bg-surface text-[#0E1E21] select-none w-full h-[100dvh] overflow-hidden m-0 p-0">
+<!-- Fullscreen Scalable Mobile Viewport Container -->
+<div class="relative w-full h-[100dvh] overflow-hidden bg-surface flex flex-col justify-between" id="mobile-viewport">
+  <!-- FULLSCREEN INTERACTIVE LEAFLET MAP CANVAS -->
+  <div class="absolute inset-0 z-0" id="map"></div>
+
+  <!-- Fallback shown if Leaflet/OpenStreetMap tiles fail to load -->
+  <div class="absolute inset-0 z-0 hidden bg-[#097C87] flex flex-col items-center justify-center text-white px-6" id="map-fallback">
+    <div class="w-24 h-24 rounded-full bg-white/20 flex items-center justify-center mb-3 border-4 border-white/30">
+      <span class="material-symbols-outlined text-[40px] text-white">map</span>
+    </div>
+    <h3 class="text-base font-extrabold tracking-tight">Offline map</h3>
+    <p class="text-xs text-blue-50 mt-1 max-w-xs text-center leading-relaxed">
+      Map tiles are temporarily unavailable. Check your connection and retry.<br/>
+      <span class="text-[#23CED9]">OpenStreetMap</span> tiles load automatically — no token needed.
+    </p>
+    <button class="mt-4 px-4 py-2 rounded-xl bg-white text-[#097C87] text-[11px] font-extrabold hover:bg-[#23CED9]/20 transition" onclick="retryMapLoad()">
+      Retry loading map
+    </button>
   </div>
-  <h3 class="text-base font-extrabold tracking-tight">Offline map</h3>
-  <p class="text-xs text-blue-50 mt-1 max-w-[260px] text-center leading-relaxed">
-    Map tiles are temporarily unavailable. Check your connection and retry.<br/>
-    <span class="text-[#23CED9]">OpenStreetMap</span> tiles load automatically — no token needed.
-  </p>
-  <button class="mt-4 px-4 py-2 rounded-xl bg-white text-[#097C87] text-[11px] font-extrabold hover:bg-[#23CED9]/20 transition" onclick="retryMapLoad()">
-    Retry loading map
-  </button>
-</div>
-<!-- Soft edge vignette gradients -->
-<div class="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-[#097c87]/25 via-transparent to-transparent pointer-events-none z-10"></div>
-<div class="absolute inset-x-0 bottom-0 h-44 bg-gradient-to-t from-[#097c87]/20 via-transparent to-transparent pointer-events-none z-10"></div>
-<!-- Placing Marker Banner Bar (when active) -->
-<div class="hidden absolute top-24 left-4 right-4 z-30 bg-[#097C87] text-white px-3.5 py-2.5 rounded-2xl shadow-xl border border-white/40 flex items-center justify-between animate-bounce" id="place-mode-banner">
-<div class="flex items-center space-x-2">
-<span class="material-symbols-outlined text-[18px] text-[#23CED9] animate-pulse">add_location_alt</span>
-<span class="text-xs font-bold">Tap anywhere on map to add &amp; connect stop</span>
-</div>
-<button class="text-[11px] font-extrabold bg-white/20 hover:bg-white/30 px-2.5 py-0.5 rounded-full" onclick="togglePlaceMarkerMode(false)">Done</button>
-</div>
-<!-- GLASSMORPHIC TOP NAVIGATION BAR -->
-<header class="relative z-30 pt-11 px-4 flex items-center justify-between pointer-events-none">
-<button class="pointer-events-auto w-10 h-10 rounded-2xl glass-nav text-[#097C87] shadow-lg shadow-[#097C87]/10 flex items-center justify-center transition active:scale-95 hover:bg-white focus:outline-none" onclick="toggleTripsDrawer(true)" title="My Trips Menu">
-<span class="material-symbols-outlined text-[21px] text-[#097C87]">menu</span>
-</button>
-<div class="pointer-events-auto px-3 py-1.5 rounded-full glass-nav shadow-lg shadow-black/5 flex items-center space-x-1.5 border border-white/80">
-<span class="material-symbols-outlined text-[15px] text-[#097C87]">auto_stories</span>
-<span class="text-[11px] font-extrabold tracking-tight text-[#097C87]">Florida Coastal Trip</span>
-<span class="text-[9px] font-bold text-[#FCA47C] bg-[#FFF6F1] px-1.5 py-0.5 rounded-full border border-[#FCA47C]/40 uppercase tracking-wider">Shared</span>
-</div>
-<div class="pointer-events-auto flex items-center space-x-1.5">
-<button class="h-9 px-2.5 rounded-full bg-[#097C87] text-white hover:bg-[#07666f] active:scale-95 shadow-md flex items-center space-x-1 text-[11px] font-bold transition focus:outline-none" onclick="openInviteModal()">
-<span class="material-symbols-outlined text-[15px] text-[#23CED9]">person_add</span>
-<span class="">Invite</span>
-</button>
-<!-- Dark mode / theme toggle -->
-<button class="w-8 h-8 rounded-full glass-nav shadow-md flex items-center justify-center text-[#097C87] hover:bg-white active:scale-90 transition focus:outline-none" onclick="toggleDarkMode()" title="Toggle Dark Mode" id="theme-toggle-btn">
-<span class="material-symbols-outlined text-[18px]" id="theme-toggle-icon">dark_mode</span>
-</button>
-<!-- Interactive Profile Avatar -->
-<div class="relative">
-<button class="relative w-9 h-9 rounded-full p-0.5 bg-white shadow-md border border-[#CBDDE1] overflow-hidden transition active:scale-90 hover:ring-3 focus:outline-none ring-2 ring-[#23CED9] group" onclick="openProfileModal()" title="View &amp; Edit Travel Profile">
-<img alt="User traveler avatar" class="w-full h-full object-cover rounded-full" id="header-user-avatar" src="https://picsum.photos/seed/manatee/400/400"/>
-</button>
-<span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-[#A1CCA6] border-2 border-white flex items-center justify-center pointer-events-none" title="Online Co-author">
-<span class="w-1 h-1 bg-white rounded-full"></span>
-</span>
-</div>
-</div>
-</header>
-<!-- FLOATING MAP CONTROLS (STACKED RIGHT) - pointer-events-none on full-width wrapper so center map remains interactive -->
-<div class="relative z-20 px-3.5 flex flex-col items-end space-y-2 pointer-events-none mt-2">
-<!-- Center on active pin / compass -->
-<button class="pointer-events-auto w-9 h-9 rounded-xl glass-control shadow-md shadow-black/10 flex items-center justify-center text-[#097C87] hover:text-[#097C87]/80 active:scale-90 transition group" onclick="centerMapOnCurrentPin()" title="Recenter on Active Location (Key West)">
-<span class="material-symbols-outlined text-[19px] text-[#097C87] group-hover:rotate-45 transition-transform duration-300">explore</span>
-</button>
-<!-- Zoom In -->
-<button class="pointer-events-auto w-9 h-9 rounded-xl glass-control shadow-md shadow-black/10 flex items-center justify-center text-[#097C87] active:scale-90 transition" onclick="zoomInMap()" title="Zoom In">
-<span class="material-symbols-outlined text-[19px] text-[#097C87]">add</span>
-</button>
-<!-- Zoom Out -->
-<button class="pointer-events-auto w-9 h-9 rounded-xl glass-control shadow-md shadow-black/10 flex items-center justify-center text-[#097C87] active:scale-90 transition" onclick="zoomOutMap()" title="Zoom Out">
-<span class="material-symbols-outlined text-[19px] text-[#097C87]">remove</span>
-</button>
-<!-- Friends indicator toggle -->
-<button class="pointer-events-auto w-9 h-9 rounded-xl glass-control shadow-md shadow-black/10 flex items-center justify-center active:scale-90 transition relative" onclick="toggleFriendsLayer()" title="Toggle Friends on Map">
-<span class="material-symbols-outlined text-[19px] text-[#097C87]">group</span>
-<span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#FCA47C] ring-1 ring-white"></span>
-</button>
-<!-- Recenter button -->
-<button class="pointer-events-auto w-9 h-9 rounded-xl glass-control shadow-md shadow-black/10 flex items-center justify-center active:scale-90 transition" onclick="centerMapOnCurrentPin()" title="Re-center on latest step">
-<span class="material-symbols-outlined text-[19px] text-[#23CED9] fill-1">my_location</span>
-</button>
-<!-- Live status pill -->
-<div class="pointer-events-auto px-2 py-1 rounded-lg glass-control shadow-xs flex items-center space-x-1 text-[10px] font-bold text-[#097C87]">
-<span class="material-symbols-outlined text-[12px] text-[#A1CCA6]">cloud_sync</span>
-<span class="tracking-tight">Live Trip</span>
-</div>
-</div>
-<!-- BOTTOM INTERACTION SHEET -->
-<div class="relative z-30 w-full mt-auto pointer-events-none">
-<div class="pointer-events-auto bg-surface-container-lowest rounded-t-[2.25rem] shadow-[0_-16px_36px_rgba(9,124,135,0.14)] border-t border-white px-5 pt-3 pb-5 transition-all">
-<!-- Sheet drag pill handle -->
-<div class="w-11 h-1.5 bg-[#CBDDE1] rounded-full mx-auto mb-3 cursor-pointer hover:bg-[#097C87]/40 transition" onclick="centerMapOnCurrentPin()"></div>
-<div class="flex items-start justify-between mb-2.5">
-<div class="space-y-0.5">
-<div class="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-[#E5F7FB] border border-[#CBDDE1]/60">
-<span class="w-1.5 h-1.5 rounded-full bg-[#23CED9]"></span>
-<span class="text-[9.5px] font-extrabold text-[#097C87] tracking-wider uppercase">DAY 4 · ATLANTIC COAST &amp; KEYS</span>
-</div>
-<h1 class="text-[18px] font-extrabold text-[#0E1E21] tracking-tight leading-snug">Florida Coastal Trip</h1>
-<p class="text-[11px] font-medium text-slate-500">St. Augustine to Key West · Scenic Highway A1A</p>
-</div>
-<button class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-[#097C87] to-[#07666f] text-white flex items-center space-x-1.5 shadow-md shadow-[#097C87]/25 active:scale-95 transition focus:outline-none" onclick="toggleTripStoryModal()">
-<span class="material-symbols-outlined text-[16px] text-[#23CED9]">menu_book</span>
-<span class="text-[11px] font-extrabold">Trip Story</span>
-</button>
-</div>
-<!-- Traveling companion card -->
-<div class="mb-2.5 px-3 py-2 rounded-2xl bg-[#FFFDF4] border border-[#F9D779]/50 flex items-center justify-between cursor-pointer hover:bg-[#FFF9E6] transition" onclick="openInviteModal()">
-<div class="flex items-center space-x-2.5">
-<div class="flex -space-x-1.5 overflow-hidden">
-<img alt="User avatar" class="inline-block h-6 w-6 rounded-full ring-2 ring-white object-cover companion-sync-avatar" src="https://picsum.photos/seed/dolphin/400/400"/>
-<div class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-[#23CED9] ring-2 ring-white text-[9px] font-extrabold text-white">LK</div>
-<div class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-[#FCA47C] ring-2 ring-white text-[9px] font-extrabold text-white">+2</div>
-</div>
-<div>
-<p class="text-[11px] font-bold text-[#0E1E21] leading-tight">Traveling with Emma, Liam &amp; 2 friends</p>
-<p class="text-[10px] text-[#9C7507] font-semibold">Emma posted 4 new sunset memories</p>
-</div>
-</div>
-<button class="text-[#097C87] text-[11px] font-extrabold flex items-center space-x-0.5 focus:outline-none">
-<span class="">View</span>
-<span class="material-symbols-outlined text-[14px]">chevron_right</span>
-</button>
-</div>
-<!-- Latest Journal Note snippet (clickable to Key West modal) -->
-<div class="mb-3 px-3 py-2 rounded-xl bg-gradient-to-r from-[#E5F7FB] to-[#EEFCFF] border border-[#CBDDE1]/70 flex items-center justify-between cursor-pointer hover:border-[#23CED9] transition" onclick="openWaypointModal('keywest')">
-<div class="flex items-center space-x-2.5">
-<div class="w-7 h-7 rounded-lg bg-[#A1CCA6]/30 flex items-center justify-center text-[#097C87] shrink-0">
-<span class="material-symbols-outlined text-[16px] text-[#097C87]">auto_stories</span>
-</div>
-<div>
-<p class="text-[10px] font-bold uppercase text-[#097C87] tracking-wider">Latest Journal Note</p>
-<p class="text-xs font-bold text-[#0E1E21] leading-tight truncate max-w-[200px]" id="latest-note-title">“Sunset over Mallory Square, Key West...”</p>
-</div>
-</div>
-<div class="flex items-center space-x-1.5 shrink-0">
-<span class="text-[10px] font-bold text-[#FCA47C] bg-white px-2 py-0.5 rounded-full border border-[#FCA47C]/40" id="total-pins-badge">4 Stops</span>
-</div>
-</div>
-<!-- Action Buttons Row: (+ Place Marker left in Teal #097C87, + Add Memory right in Coral #FCA47C, Share icon right) -->
-<div class="flex items-center space-x-2">
-<button class="flex-1 flex items-center justify-center space-x-1.5 py-3 px-3 rounded-2xl bg-[#097C87] hover:bg-[#07666f] active:scale-[0.98] text-white font-extrabold text-[13px] teal-glow transition focus:outline-none shadow-md shadow-[#097C87]/25" onclick="openAddStopModal()">
-<span class="material-symbols-outlined text-[18px] text-[#23CED9]">add_location_alt</span>
-<span class="">+ Place Marker</span>
-</button>
-<button class="flex-1 flex items-center justify-center space-x-1.5 py-3 px-3 rounded-2xl bg-[#FCA47C] hover:bg-[#fa9466] active:scale-[0.98] text-white font-bold text-[13px] coral-glow transition focus:outline-none shadow-md shadow-[#FCA47C]/25" onclick="openAddMemoryModal()">
-<span class="material-symbols-outlined text-[18px]">add_photo_alternate</span>
-<span class="">+ Add Memory</span>
-</button>
-<button class="w-11 h-11 rounded-2xl bg-[#EEFCFF] hover:bg-[#DFF1F5] active:scale-95 border border-[#CBDDE1] flex items-center justify-center text-[#097C87] transition focus:outline-none shrink-0" onclick="shareTripLink()" title="Share Trip Link">
-<span class="material-symbols-outlined text-[19px]">ios_share</span>
-</button>
-</div>
-<!-- Bottom home indicator -->
-<div class="w-32 h-1 bg-slate-300 rounded-full mx-auto mt-3"></div>
-</div>
-</div>
-<!-- TOAST NOTIFICATION POPUP -->
-<div class="absolute top-16 left-1/2 -translate-x-1/2 z-50 pointer-events-none transition-all duration-300 transform flex items-center space-x-2 bg-[#0E1E21]/95 text-white px-4 py-2.5 rounded-full shadow-2xl border border-white/20 text-xs font-semibold -translate-y-6 opacity-0" id="toast-notification">
-<span class="material-symbols-outlined text-[16px] text-[#23CED9]" id="toast-icon">my_location</span>
-<span class="" id="toast-message">Centered on Key West active stop</span>
-</div>
-<!-- ================= POLARSTEPS USER PROFILE & AVATAR CHANGER MODAL ================= -->
-<div class="fixed inset-0 z-50 hidden flex items-end sm:items-center justify-center" id="profile-modal">
-<div class="absolute inset-0 modal-backdrop transition-opacity duration-300" onclick="closeProfileModal()"></div>
-<div class="relative w-full max-w-[390px] bg-white rounded-t-[2.25rem] sm:rounded-3xl p-5 shadow-2xl z-10 space-y-4 max-h-[90vh] overflow-y-auto hide-scrollbar animate-in slide-in-from-bottom duration-300">
-<div class="w-11 h-1.5 bg-[#CBDDE1] rounded-full mx-auto cursor-pointer" onclick="closeProfileModal()"></div>
-<div class="flex items-center justify-between">
-<div class="flex items-center space-x-2">
-<span class="material-symbols-outlined text-[20px] text-[#097C87]">badge</span>
-<h3 class="text-base font-extrabold text-[#0E1E21]">Traveler Profile</h3>
-</div>
-<button class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 active:scale-95 transition" onclick="closeProfileModal()">
-<span class="material-symbols-outlined text-[18px]">close</span>
-</button>
-</div>
-<!-- Profile Card Header with Avatar Changer -->
-<div class="relative p-4 rounded-2xl bg-gradient-to-br from-[#EEFCFF] via-[#E5F7FB] to-[#FAFDFE] border border-[#CBDDE1]/80 shadow-xs flex items-center space-x-4">
-<!-- Avatar with camera overlay -->
-<div class="relative shrink-0">
-<div class="w-20 h-20 rounded-full p-1 bg-white shadow-md border-2 border-[#23CED9] overflow-hidden">
-<img alt="User Avatar" class="w-full h-full object-cover rounded-full" id="profile-modal-avatar-preview" src="https://picsum.photos/seed/turtle/400/400"/>
-</div>
-<button class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#097C87] text-white shadow-md border-2 border-white flex items-center justify-center hover:bg-[#07666f] active:scale-95 transition" onclick="triggerAvatarUploadTrigger()" title="Change Profile Photo">
-<span class="material-symbols-outlined text-[14px] text-[#23CED9]">photo_camera</span>
-</button>
-<input accept="image/*" class="hidden" id="avatar-file-input" onchange="handleAvatarFileUpload(event)" type="file"/>
-</div>
-<!-- Name & Details -->
-<div class="flex-1 min-w-0">
-<div class="flex items-center space-x-1.5">
-<h4 class="text-sm font-black text-[#0E1E21] truncate" id="profile-name-text">Emma Harrison</h4>
-<span class="material-symbols-outlined text-[15px] text-[#097C87]">verified</span>
-</div>
-<p class="text-[11px] font-semibold text-[#097C87] truncate">@emma.travels</p>
-<div class="inline-flex items-center space-x-1 mt-1 px-2 py-0.5 rounded-full bg-white/90 border border-[#CBDDE1]/80 text-[9.5px] font-bold text-slate-600">
-<span class="w-1.5 h-1.5 rounded-full bg-[#A1CCA6]"></span>
-<span>Exploring Florida Keys</span>
-</div>
-</div>
-</div>
-<!-- Avatar Presets Picker -->
-<div class="space-y-2 bg-[#F8FCFD] p-3 rounded-2xl border border-[#CBDDE1]/60">
-<div class="flex items-center justify-between">
-<span class="text-[10px] font-extrabold uppercase tracking-wider text-[#097C87]">Quick Avatar Presets</span>
-<button class="text-[10.5px] font-bold text-[#FCA47C] hover:underline flex items-center space-x-0.5" onclick="triggerAvatarUploadTrigger()">
-<span class="material-symbols-outlined text-[13px]">upload</span>
-<span>Upload Own</span>
-</button>
-</div>
-<div class="flex items-center justify-between pt-1">
-<button class="w-11 h-11 rounded-full p-0.5 border-2 border-[#097C87] ring-2 ring-[#23CED9]/50 overflow-hidden active:scale-90 transition relative" onclick="selectAvatarPreset('https://picsum.photos/seed/manatee/400/400', 'Coastal Traveler')">
-<img alt="Preset 1" class="w-full h-full object-cover rounded-full" src="https://picsum.photos/seed/manatee/400/400"/>
-</button>
-<button class="w-11 h-11 rounded-full p-0.5 border-2 border-transparent hover:border-[#097C87] overflow-hidden active:scale-90 transition" onclick="selectAvatarPreset('https://picsum.photos/seed/goat/400/400', 'Alpine Hiker')">
-<img alt="Preset 2" class="w-full h-full object-cover rounded-full" src="https://picsum.photos/seed/goat/400/400"/>
-</button>
-<button class="w-11 h-11 rounded-full p-0.5 border-2 border-transparent hover:border-[#097C87] overflow-hidden active:scale-90 transition" onclick="selectAvatarPreset('https://picsum.photos/seed/bear/400/400', 'Backpacker Nomad')">
-<img alt="Preset 3" class="w-full h-full object-cover rounded-full" src="https://picsum.photos/seed/bear/400/400"/>
-</button>
-<button class="w-11 h-11 rounded-full p-0.5 border-2 border-transparent hover:border-[#097C87] overflow-hidden active:scale-90 transition" onclick="selectAvatarPreset('https://picsum.photos/seed/wolf/400/400', 'Roadtripper')">
-<img alt="Preset 4" class="w-full h-full object-cover rounded-full" src="https://picsum.photos/seed/wolf/400/400"/>
-</button>
-<button class="w-11 h-11 rounded-full p-0.5 border-2 border-transparent hover:border-[#097C87] overflow-hidden active:scale-90 transition" onclick="selectAvatarPreset('https://picsum.photos/seed/seal/400/400', 'Island Nomad')">
-<img alt="Preset 5" class="w-full h-full object-cover rounded-full" src="https://picsum.photos/seed/seal/400/400"/>
-</button>
-</div>
-</div>
-<!-- POLARSTEPS COMPREHENSIVE TRAVEL STATS GRID -->
-<div>
-<div class="flex items-center justify-between mb-2">
-<span class="text-[10.5px] font-black uppercase tracking-wider text-[#097C87]">Travel Statistics</span>
-</div>
-<div class="grid grid-cols-3 gap-2">
-<div class="p-2.5 rounded-2xl bg-[#EEFCFF] border border-[#CBDDE1]/70 text-center">
-<span class="material-symbols-outlined text-[18px] text-[#097C87]">route</span>
-<div class="text-base font-black text-[#0E1E21] leading-tight">14</div>
-<div class="text-[9.5px] font-bold text-slate-500">Trips Tracked</div>
-<span class="inline-block mt-0.5 text-[8px] font-extrabold text-[#097C87] bg-white px-1.5 py-0.2 rounded-full border border-[#097C87]/30">+4 this yr</span>
-</div>
-<div class="p-2.5 rounded-2xl bg-[#FFF6F1] border border-[#FCA47C]/40 text-center">
-<span class="material-symbols-outlined text-[18px] text-[#FCA47C]">photo_library</span>
-<div class="text-base font-black text-[#0E1E21] leading-tight">186</div>
-<div class="text-[9.5px] font-bold text-slate-500">Posts Made</div>
-<span class="inline-block mt-0.5 text-[8px] font-extrabold text-[#FCA47C] bg-white px-1.5 py-0.2 rounded-full border border-[#FCA47C]/30">snaps &amp; notes</span>
-</div>
-<div class="p-2.5 rounded-2xl bg-[#FFFDF4] border border-[#F9D779]/60 text-center">
-<span class="material-symbols-outlined text-[18px] text-[#9C7507]">star</span>
-<div class="text-base font-black text-[#0E1E21] leading-tight">42</div>
-<div class="text-[9.5px] font-bold text-slate-500">Key Memories</div>
-<span class="inline-block mt-0.5 text-[8px] font-extrabold text-[#9C7507] bg-white px-1.5 py-0.2 rounded-full border border-[#F9D779]">featured</span>
-</div>
-</div>
-<div class="grid grid-cols-2 gap-2 mt-2">
-<div class="px-3 py-2 rounded-xl bg-white border border-[#CBDDE1] flex items-center space-x-2.5">
-<div class="w-8 h-8 rounded-lg bg-[#23CED9]/20 flex items-center justify-center text-[#097C87]">
-<span class="material-symbols-outlined text-[18px] text-[#097C87]">public</span>
-</div>
-<div>
-<div class="text-xs font-black text-[#0E1E21]">28 Countries</div>
-<div class="text-[9.5px] text-slate-400 font-semibold">Visited around globe</div>
-</div>
-</div>
-<div class="px-3 py-2 rounded-xl bg-white border border-[#CBDDE1] flex items-center space-x-2.5">
-<div class="w-8 h-8 rounded-lg bg-[#A1CCA6]/30 flex items-center justify-center text-[#097C87]">
-<span class="material-symbols-outlined text-[18px] text-[#097C87]">calendar_month</span>
-</div>
-<div>
-<div class="text-xs font-black text-[#0E1E21]">142 Days</div>
-<div class="text-[9.5px] text-slate-400 font-semibold">On the road tracker</div>
-</div>
-</div>
-</div>
-</div>
-<!-- KEY MEMORIES HIGHLIGHTS PREVIEW -->
-<div class="space-y-2">
-<div class="flex items-center justify-between">
-<span class="text-[10.5px] font-black uppercase tracking-wider text-[#097C87]">Key Memories Highlights</span>
-<span class="text-[10px] font-bold text-[#FCA47C]">3 of 42</span>
-</div>
-<div class="space-y-2">
-<div class="p-2.5 rounded-xl bg-[#FAFDFE] border border-[#CBDDE1] flex items-center justify-between cursor-pointer hover:border-[#097C87] transition" onclick="closeProfileModal(); openWaypointModal('keywest');">
-<div class="flex items-center space-x-2.5">
-<img alt="Mallory Square" class="w-10 h-10 rounded-lg object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1Vn9tfbgaTGhyGukBtHtipzC9oWqjMkKKCs1wTBQ1IDCrlimEa5Aje8tut62cwkjFBjWrotn-Kke4_IjqLZvmhGEvDZEn88yZTY89nzpPklM-fvEQIMkAMseBzQKSkNrftca673yYJAZei8d3Zu3HUQyKUJdUuLX4nuv2N2CG537W74AGsEdfHrEJLykeaLRq6kwHWFztLPpgLXJk2EKcfpfpovMnIOGIDV_tENdFZT"/>
-<div>
-<div class="text-xs font-extrabold text-[#0E1E21]">Mallory Square Sunset</div>
-<div class="text-[10px] text-slate-500">Florida Keys · 14 Likes</div>
-</div>
-</div>
-<span class="material-symbols-outlined text-[16px] text-[#097C87]">chevron_right</span>
-</div>
-<div class="p-2.5 rounded-xl bg-[#FAFDFE] border border-[#CBDDE1] flex items-center justify-between cursor-pointer hover:border-[#097C87] transition" onclick="closeProfileModal(); selectTrip('alps');">
-<div class="flex items-center space-x-2.5">
-<img alt="Alps Sunrise" class="w-10 h-10 rounded-lg object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_6OpUw-70uW4h_6_9l9E4Pvd-1HrHKnZiH3Ixie2JA1OX2xZLzUwNXL877nQjcK9KyFvq5xkEB1nv3B0uhx4P_uGLC4a76SH0sOYxrOxj2CyFHyLmEkZN9XAkRblwF7stReCnipfV3gYefiRvpXmxbS8rJ-ZmGbL4XWLWInXUWi1VpkKhEC1zKXmBqFs11Az-7vzf6SbnbpUc809hq4w14F9UNX0vx4XzhsjbgZ8"/>
-<div>
-<div class="text-xs font-extrabold text-[#0E1E21]">Alps Sunrise Hike</div>
-<div class="text-[10px] text-slate-500">Mont Blanc · 48 Likes</div>
-</div>
-</div>
-<span class="material-symbols-outlined text-[16px] text-[#097C87]">chevron_right</span>
-</div>
-<div class="p-2.5 rounded-xl bg-[#FAFDFE] border border-[#CBDDE1] flex items-center justify-between cursor-pointer hover:border-[#097C87] transition" onclick="closeProfileModal(); selectTrip('canada');">
-<div class="flex items-center space-x-2.5">
-<img alt="Banff Lake" class="w-10 h-10 rounded-lg object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDNi-Tlm_CZzQNj8s1mG7kLXu-MUtxtejtqR26HDuV5iKLhZiGrjw4g_gvCUhHjrGUgM_VD4ObDEiOQwaVeyzhk4PQg6vnC3amak-Kh_V0E6TSbWJvmEhoguv7jkI0ojjWjgmKjARKsLYVRIpHpL3tQ7sgqy9Qwm4k0bWZyCO45T8O-vnErBI9jEnCLPKIFIIe1rCa6mspvENEjVVP5n7QYPeX1PztKEj7p53oCAMk"/>
-<div>
-<div class="text-xs font-extrabold text-[#0E1E21]">Banff Glacier Lake</div>
-<div class="text-[10px] text-slate-500">Canadian Rockies · 39 Likes</div>
-</div>
-</div>
-<span class="material-symbols-outlined text-[16px] text-[#097C87]">chevron_right</span>
-</div>
-</div>
-</div>
-<div class="pt-2 flex items-center space-x-2">
-<button class="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold active:scale-95 transition" onclick="closeProfileModal()">Done</button>
-<button class="flex-1 py-2.5 rounded-xl bg-[#097C87] hover:bg-[#07666f] text-white text-xs font-extrabold teal-glow active:scale-95 transition flex items-center justify-center space-x-1" onclick="showToast('Profile sync completed with Polarsteps!', 'cloud_done'); closeProfileModal();">
-<span class="material-symbols-outlined text-[15px] text-[#23CED9]">sync</span>
-<span>Sync Profile</span>
-</button>
-</div>
-</div>
-</div>
-<!-- SIDEBAR TRIPS DRAWER (SLIDES IN FROM LEFT) -->
-<div class="fixed inset-0 z-50 hidden" id="trips-drawer-container">
-<div class="absolute inset-0 modal-backdrop transition-opacity duration-300 opacity-0" id="trips-drawer-backdrop" onclick="toggleTripsDrawer(false)"></div>
-<div class="absolute inset-y-0 left-0 w-[310px] max-w-[85vw] bg-white shadow-2xl z-10 flex flex-col justify-between transform -translate-x-full transition-transform duration-300 ease-out border-r border-[#CBDDE1]" id="trips-drawer-panel">
-<div class="pt-10 px-5 pb-4 bg-gradient-to-b from-[#EEFCFF] to-white border-b border-[#DFF1F5]">
-<div class="flex items-center justify-between mb-4">
-<div class="flex items-center space-x-2.5">
-<div class="w-9 h-9 rounded-xl bg-[#097C87] flex items-center justify-center text-white shadow-md shadow-[#097C87]/20">
-<span class="material-symbols-outlined text-[20px] text-[#23CED9]">explore</span>
-</div>
-<div>
-<h2 class="text-sm font-extrabold text-[#0E1E21] tracking-tight">WayStory</h2>
-<span class="text-[10px] font-bold text-[#097C87] tracking-wider uppercase">Travel Logbook</span>
-</div>
-</div>
-<button class="w-8 h-8 rounded-full bg-white shadow-sm border border-[#CBDDE1] flex items-center justify-center text-slate-500 hover:text-[#0E1E21] hover:bg-[#EEFCFF] active:scale-95 transition" onclick="toggleTripsDrawer(false)" title="Close Drawer">
-<span class="material-symbols-outlined text-[18px]">close</span>
-</button>
-</div>
-<div class="flex items-center justify-between p-2.5 rounded-2xl bg-white border border-[#CBDDE1]/70 shadow-xs cursor-pointer hover:border-[#097C87] transition" onclick="toggleTripsDrawer(false); openProfileModal();">
-<div class="flex items-center space-x-2.5">
-<img alt="User Profile" class="w-9 h-9 rounded-full object-cover ring-2 ring-[#23CED9] drawer-profile-avatar" src="https://picsum.photos/seed/manatee/400/400"/>
-<div>
-<h4 class="text-xs font-black text-[#0E1E21] leading-tight" id="drawer-user-name">Emma Harrison</h4>
-<span class="text-[10px] font-semibold text-[#097C87]">14 journeys · 186 posts</span>
-</div>
-</div>
-<span class="material-symbols-outlined text-[18px] text-slate-400">tune</span>
-</div>
-</div>
-<div class="flex-1 overflow-y-auto px-4 py-3 space-y-3 hide-scrollbar">
-<div class="flex items-center justify-between px-1">
-<span class="text-[10.5px] font-black uppercase text-[#097C87] tracking-wider">Your Expeditions</span>
-<span class="text-[10px] font-bold bg-[#E5F7FB] text-[#097C87] px-2 py-0.5 rounded-full border border-[#CBDDE1]/60">4 Total</span>
-</div>
-<div class="relative p-3 rounded-2xl bg-gradient-to-r from-[#EEFCFF] to-[#E5F7FB] border-2 border-[#097C87] shadow-sm cursor-pointer hover:shadow-md transition active:scale-[0.99]" onclick="selectTrip('florida')">
-<div class="flex items-start space-x-3">
-<div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 relative shadow-sm">
-<img alt="Florida Keys" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1Vn9tfbgaTGhyGukBtHtipzC9oWqjMkKKCs1wTBQ1IDCrlimEa5Aje8tut62cwkjFBjWrotn-Kke4_IjqLZvmhGEvDZEn88yZTY89nzpPklM-fvEQIMkAMseBzQKSkNrftca673yYJAZei8d3Zu3HUQyKUJdUuLX4nuv2N2CG537W74AGsEdfHrEJLykeaLRq6kwHWFztLPpgLXJk2EKcfpfpovMnIOGIDV_tENdFZT"/>
-<div class="absolute inset-0 bg-[#097C87]/20"></div>
-</div>
-<div class="flex-1 min-w-0">
-<div class="flex items-center justify-between mb-0.5">
-<span class="inline-flex items-center px-1.5 py-0.2 rounded-full bg-[#097C87] text-[8.5px] font-extrabold text-white tracking-wide uppercase">
-<span class="w-1 h-1 rounded-full bg-[#23CED9] mr-1 animate-pulse"></span>Active Now
-</span>
-<span class="text-[9.5px] font-bold text-[#FCA47C]">Day 4 of 6</span>
-</div>
-<h3 class="text-xs font-extrabold text-[#0E1E21] truncate">Florida Coastal Trip</h3>
-<p class="text-[10px] text-slate-500 truncate" id="drawer-stops-count-text">St. Augustine to Key West · 4 Stops</p>
-</div>
-</div>
-<div class="mt-2 pt-2 border-t border-[#CBDDE1]/50 flex items-center justify-between text-[10px] text-[#097C87] font-bold">
-<span class="flex items-center space-x-1">
-<span class="material-symbols-outlined text-[13px] text-[#FCA47C]">group</span>
-<span>Shared with Emma &amp; 3 others</span>
-</span>
-<span class="material-symbols-outlined text-[16px] text-[#097C87]">arrow_forward</span>
-</div>
-</div>
-<div class="p-3 rounded-2xl bg-white border border-[#CBDDE1] hover:border-[#097C87]/50 shadow-xs cursor-pointer hover:shadow-md transition active:scale-[0.99]" onclick="selectTrip('alps')">
-<div class="flex items-start space-x-3">
-<div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 relative bg-slate-100 shadow-sm">
-<img alt="Alps Hiking" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_6OpUw-70uW4h_6_9l9E4Pvd-1HrHKnZiH3Ixie2JA1OX2xZLzUwNXL877nQjcK9KyFvq5xkEB1nv3B0uhx4P_uGLC4a76SH0sOYxrOxj2CyFHyLmEkZN9XAkRblwF7stReCnipfV3gYefiRvpXmxbS8rJ-ZmGbL4XWLWInXUWi1VpkKhEC1zKXmBqFs11Az-7vzf6SbnbpUc809hq4w14F9UNX0vx4XzhsjbgZ8"/>
-</div>
-<div class="flex-1 min-w-0">
-<div class="flex items-center justify-between mb-0.5">
-<span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Aug 2024 · 8 Days</span>
-<span class="text-[9px] font-bold text-[#A1CCA6] bg-[#A1CCA6]/15 px-1.5 py-0.5 rounded-full">Completed</span>
-</div>
-<h3 class="text-xs font-extrabold text-[#0E1E21] truncate">Hiking the Alps</h3>
-<p class="text-[10px] text-slate-500 truncate">Tour du Mont Blanc · Switzerland &amp; France</p>
-</div>
-</div>
-<div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-semibold">
-<span>18 journal notes · 62 snaps</span>
-<span class="text-[#097C87] font-bold flex items-center">Open <span class="material-symbols-outlined text-[14px]">chevron_right</span></span>
-</div>
-</div>
-<div class="p-3 rounded-2xl bg-white border border-[#CBDDE1] hover:border-[#097C87]/50 shadow-xs cursor-pointer hover:shadow-md transition active:scale-[0.99]" onclick="selectTrip('canada')">
-<div class="flex items-start space-x-3">
-<div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 relative bg-slate-100 shadow-sm">
-<img alt="Canada Banff" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDNi-Tlm_CZzQNj8s1mG7kLXu-MUtxtejtqR26HDuV5iKLhZiGrjw4g_gvCUhHjrGUgM_VD4ObDEiOQwaVeyzhk4PQg6vnC3amak-Kh_V0E6TSbWJvmEhoguv7jkI0ojjWjgmKjARKsLYVRIpHpL3tQ7sgqy9Qwm4k0bWZyCO45T8O-vnErBI9jEnCLPKIFIIe1rCa6mspvENEjVVP5n7QYPeX1PztKEj7p53oCAMk"/>
-</div>
-<div class="flex-1 min-w-0">
-<div class="flex items-center justify-between mb-0.5">
-<span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Jul 2024 · 12 Days</span>
-<span class="text-[9px] font-bold text-[#A1CCA6] bg-[#A1CCA6]/15 px-1.5 py-0.5 rounded-full">Completed</span>
-</div>
-<h3 class="text-xs font-extrabold text-[#0E1E21] truncate">Canada</h3>
-<p class="text-[10px] text-slate-500 truncate">Banff &amp; Jasper Rockies Expedition</p>
-</div>
-</div>
-<div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-semibold">
-<span>24 journal notes · 110 snaps</span>
-<span class="text-[#097C87] font-bold flex items-center">Open <span class="material-symbols-outlined text-[14px]">chevron_right</span></span>
-</div>
-</div>
-<div class="p-3 rounded-2xl bg-white border border-[#CBDDE1] hover:border-[#097C87]/50 shadow-xs cursor-pointer hover:shadow-md transition active:scale-[0.99]" onclick="selectTrip('route66')">
-<div class="flex items-start space-x-3">
-<div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 relative bg-slate-100 shadow-sm">
-<img alt="Route 66" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOLAtkZstBguJ7yNdqKkysdNzZmT5O2VwUVczItrjRK-4xW_wNHCA4KWIyQ-_6-C8lTFchGp6n-CU3D0LUCOnpdZvLM7-2Nf08GG1JRF2oTnEnzqO3NeyaOz45NTVQlnUMyEtdwFwHo0oIqisYZ0Ixh67I7JaZf2GrDce3azOHxpd31xEqS3dAFbBE7dSCpnyIDewDpLYnyw9JTp7RiqyLWdU8WzrPmc7YI3mvQqc"/>
-</div>
-<div class="flex-1 min-w-0">
-<div class="flex items-center justify-between mb-0.5">
-<span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">May 2024 · 14 Days</span>
-<span class="text-[9px] font-bold text-[#A1CCA6] bg-[#A1CCA6]/15 px-1.5 py-0.5 rounded-full">Completed</span>
-</div>
-<h3 class="text-xs font-extrabold text-[#0E1E21] truncate">Route 66 Roadtrip</h3>
-<p class="text-[10px] text-slate-500 truncate">Chicago to Santa Monica Pier</p>
-</div>
-</div>
-<div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-semibold">
-<span>31 journal notes · 145 snaps</span>
-<span class="text-[#097C87] font-bold flex items-center">Open <span class="material-symbols-outlined text-[14px]">chevron_right</span></span>
-</div>
-</div>
-</div>
-<div class="p-4 border-t border-[#CBDDE1] bg-[#FAFDFE] space-y-2">
-<button class="w-full py-2.5 px-4 rounded-xl bg-[#097C87] hover:bg-[#07666f] active:scale-95 text-white font-extrabold text-xs shadow-md shadow-[#097C87]/25 flex items-center justify-center space-x-2 transition" onclick="createNewTrip()">
-<span class="material-symbols-outlined text-[18px] text-[#23CED9]">add_circle</span>
-<span>+ New Trip</span>
-</button>
-<p class="text-[9.5px] text-center text-slate-400 font-medium">Live GPS tracking · OpenStreetMap</p>
-</div>
-</div>
-</div>
-<!-- PLACE NEW STOP / MARKER MODAL -->
-<div class="fixed inset-0 z-40 hidden flex items-end sm:items-center justify-center" id="add-stop-modal">
-<div class="absolute inset-0 modal-backdrop transition-opacity" onclick="closeAddStopModal()"></div>
-<div class="relative w-full max-w-[390px] bg-white rounded-t-[2.25rem] p-5 shadow-2xl z-10 space-y-3.5 max-h-[85vh] overflow-y-auto hide-scrollbar">
-<div class="w-10 h-1 bg-[#CBDDE1] rounded-full mx-auto"></div>
-<div class="flex items-center justify-between">
-<div>
-<div class="inline-block text-[9.5px] font-extrabold uppercase text-[#097C87] tracking-wider">ROADTRIP ROUTE</div>
-<h3 class="text-base font-extrabold text-[#0E1E21]">Add Route Stop</h3>
-<p class="text-[11px] text-slate-500">Pins automatically connect sequentially into the route</p>
-</div>
-<button class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition" onclick="closeAddStopModal()">
-<span class="material-symbols-outlined text-[18px]">close</span>
-</button>
-</div>
-<div>
-<label class="text-[10px] font-bold uppercase tracking-wider text-[#097C87] block mb-1">Quick Add Destination</label>
-<div class="flex items-center space-x-1.5 overflow-x-auto pb-1 hide-scrollbar">
-<button class="shrink-0 px-2.5 py-1 rounded-full bg-[#E5F7FB] border border-[#CBDDE1] text-[10.5px] font-bold text-[#097C87] hover:bg-[#097C87] hover:text-white transition" onclick="setPresetStop('Fort Lauderdale Beach', 26.1224, -80.1373, 'Scenic Vista', 'Iconic beachfront promenade lined with towering palms.')" type="button">
-  + Fort Lauderdale
-</button>
-<button class="shrink-0 px-2.5 py-1 rounded-full bg-[#E5F7FB] border border-[#CBDDE1] text-[10.5px] font-bold text-[#097C87] hover:bg-[#097C87] hover:text-white transition" onclick="setPresetStop('Everglades National Park', 25.2866, -80.8987, 'Camping &amp; Park', 'Airboat expedition across wild sawgrass and mangrove trails.')" type="button">
-  + Everglades
-</button>
-<button class="shrink-0 px-2.5 py-1 rounded-full bg-[#E5F7FB] border border-[#CBDDE1] text-[10.5px] font-bold text-[#097C87] hover:bg-[#097C87] hover:text-white transition" onclick="setPresetStop('Bahia Honda State Park', 24.6616, -81.2833, 'Snorkeling &amp; Reefs', 'Famous historic rail bridge vista and turquoise coral lagoon.')" type="button">
-  + Bahia Honda
-</button>
-</div>
-</div>
-<div class="space-y-2">
-<label class="text-[10.5px] font-bold uppercase tracking-wider text-[#097C87]">Stop Name</label>
-<input class="w-full bg-[#F4FAFB] border border-[#CBDDE1] rounded-xl px-3 py-2 text-xs font-semibold text-[#0E1E21] focus:ring-2 focus:ring-[#097C87] focus:outline-none" id="new-stop-name" placeholder="e.g. Bahia Honda State Park, Marathon" type="text" value="Islamorada Coral Reef"/>
-</div>
-<div class="space-y-2">
-<label class="text-[10.5px] font-bold uppercase tracking-wider text-[#097C87]">Highlight or Category</label>
-<select class="w-full bg-[#F4FAFB] border border-[#CBDDE1] rounded-xl px-3 py-2 text-xs font-semibold text-[#0E1E21] focus:ring-2 focus:ring-[#097C87] focus:outline-none" id="new-stop-category">
-<option value="Snorkeling &amp; Reefs">🤿 Snorkeling &amp; Coral Reefs</option>
-<option value="Scenic Vista">🌅 Scenic Beach &amp; Sunset</option>
-<option value="Fresh Seafood">🦞 Coastal Diner / Seafood</option>
-<option value="Camping &amp; Park">⛺ State Park &amp; Boardwalk</option>
-</select>
-</div>
-<div class="space-y-2">
-<label class="text-[10.5px] font-bold uppercase tracking-wider text-[#097C87]">Stop Note</label>
-<textarea class="w-full bg-[#F4FAFB] border border-[#CBDDE1] rounded-xl p-2.5 text-xs text-[#0E1E21] focus:ring-2 focus:ring-[#097C87] focus:outline-none" id="new-stop-notes" placeholder="Why add this stop? E.g., crystal clear shallow flats, sunset kayak..." rows="2">Crystal blue sandbar with wild manatees and key lime milkshakes.</textarea>
-</div>
-<div class="p-3 bg-[#EEFCFF] border border-[#CBDDE1] rounded-xl flex items-center justify-between">
-<div class="flex items-center space-x-2">
-<span class="material-symbols-outlined text-[#097C87] text-[20px]">touch_app</span>
-<span class="text-[11px] font-bold text-[#097C87]">Or tap precisely on the live map</span>
-</div>
-<button class="px-2.5 py-1 bg-white text-[#097C87] border border-[#CBDDE1] text-[10px] font-extrabold rounded-lg hover:bg-[#E5F7FB] transition" onclick="triggerTapToPlace()">
-  Tap on Map
-</button>
-</div>
-<div class="pt-2 flex items-center space-x-2">
-<button class="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold active:scale-95 transition" onclick="closeAddStopModal()">Cancel</button>
-<button class="flex-1 py-2.5 rounded-xl bg-[#097C87] hover:bg-[#07666f] text-white text-xs font-extrabold teal-glow active:scale-95 transition" onclick="confirmAddStop()">+ Connect to Route</button>
-</div>
-</div>
-</div>
-<!-- WAYPOINT STORY MODAL / PREVIEW CARD -->
-<div class="fixed inset-0 z-40 hidden flex items-end sm:items-center justify-center" id="waypoint-modal">
-<div class="absolute inset-0 modal-backdrop transition-opacity" onclick="closeWaypointModal()"></div>
-<div class="relative w-full max-w-[390px] bg-white rounded-t-[2.25rem] sm:rounded-3xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl z-10 animate-in slide-in-from-bottom duration-300">
-<div class="relative h-56 w-full bg-slate-900 overflow-hidden group">
-  <img alt="Location Photo" class="w-full h-full object-cover" id="wp-modal-image" src="https://lh3.googleusercontent.com/aida/AEtjO1Vn9tfbgaTGhyGukBtHtipzC9oWqjMkKKCs1wTBQ1IDCrlimEa5Aje8tut62cwkjFBjWrotn-Kke4_IjqLZvmhGEvDZEn88yZTY89nzpPklM-fvEQIMkAMseBzQKSkNrftca673yYJAZei8d3Zu3HUQyKUJdUuLX4nuv2N2CG537W74AGsEdfHrEJLykeaLRq6kwHWFztLPpgLXJk2EKcfpfpovMnIOGIDV_tENdFZT"/>
-  <button class="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-black/60 active:scale-95 transition-all" onclick="prevWaypointPhoto()" aria-label="Previous photo">
-    <span class="material-symbols-outlined text-[18px]">chevron_left</span>
-  </button>
-  <button class="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-black/60 active:scale-95 transition-all" onclick="nextWaypointPhoto()" aria-label="Next photo">
-    <span class="material-symbols-outlined text-[18px]">chevron_right</span>
-  </button>
-  <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center space-x-1.5 bg-black/50 backdrop-blur-md px-2 py-1 rounded-full text-white text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-    <span id="wp-photo-counter">1</span>
-    <span class="text-[#23CED9]">of</span>
-    <span id="wp-photo-total">1</span>
+
+  <!-- Soft edge vignette gradients -->
+  <div class="absolute inset-x-0 top-0 h-28 bg-gradient-to-b from-[#097c87]/25 via-transparent to-transparent pointer-events-none z-10"></div>
+  <div class="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-[#097c87]/20 via-transparent to-transparent pointer-events-none z-10"></div>
+
+  <!-- Placing Marker Banner Bar (when active) -->
+  <div class="hidden absolute top-20 left-4 right-4 z-30 bg-[#097C87] text-white px-3.5 py-2.5 rounded-2xl shadow-xl border border-white/40 flex items-center justify-between animate-bounce" id="place-mode-banner">
+    <div class="flex items-center space-x-2">
+      <span class="material-symbols-outlined text-[18px] text-[#23CED9] animate-pulse">add_location_alt</span>
+      <span class="text-xs font-bold">Tap anywhere on map to add &amp; connect stop</span>
+    </div>
+    <button class="text-[11px] font-extrabold bg-white/20 hover:bg-white/30 px-2.5 py-0.5 rounded-full" onclick="togglePlaceMarkerMode(false)">Done</button>
   </div>
-  <button class="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/75 active:scale-90 transition" onclick="closeWaypointModal()">
-    <span class="material-symbols-outlined text-[18px]">close</span>
-  </button>
-  <div class="absolute bottom-2.5 left-3.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full text-white text-[10px] font-bold flex items-center space-x-1">
-    <span class="material-symbols-outlined text-[13px] text-[#FCA47C]">location_on</span>
-    <span class="" id="wp-modal-badge">Key West, FL</span>
+
+  <!-- GLASSMORPHIC TOP NAVIGATION BAR -->
+  <header class="relative z-30 safe-top px-4 flex items-center justify-between gap-2 pointer-events-none w-full">
+    <button class="pointer-events-auto w-10 h-10 shrink-0 rounded-2xl glass-nav text-[#097C87] shadow-lg shadow-[#097C87]/10 flex items-center justify-center transition active:scale-95 hover:bg-white focus:outline-none" onclick="toggleTripsDrawer(true)" title="My Trips Menu">
+      <span class="material-symbols-outlined text-[21px] text-[#097C87]">menu</span>
+    </button>
+    <div class="pointer-events-auto px-3 py-1.5 rounded-full glass-nav shadow-lg shadow-black/5 flex items-center space-x-1.5 border border-white/80 min-w-0">
+      <span class="material-symbols-outlined text-[15px] text-[#097C87] shrink-0">auto_stories</span>
+      <span class="text-xs font-extrabold tracking-tight text-[#097C87] truncate">Florida Coastal Trip</span>
+      <span class="text-[9px] font-bold text-[#FCA47C] bg-[#FFF6F1] px-1.5 py-0.5 rounded-full border border-[#FCA47C]/40 uppercase tracking-wider shrink-0">Shared</span>
+    </div>
+    <div class="pointer-events-auto flex items-center space-x-1.5 shrink-0">
+      <button class="h-9 px-2.5 rounded-full bg-[#097C87] text-white hover:bg-[#07666f] active:scale-95 shadow-md flex items-center space-x-1 text-[11px] font-bold transition focus:outline-none" onclick="openInviteModal()">
+        <span class="material-symbols-outlined text-[15px] text-[#23CED9]">person_add</span>
+        <span>Invite</span>
+      </button>
+      <button class="w-8 h-8 rounded-full glass-nav shadow-md flex items-center justify-center text-[#097C87] hover:bg-white active:scale-90 transition focus:outline-none" onclick="toggleDarkMode()" title="Toggle Dark Mode" id="theme-toggle-btn">
+        <span class="material-symbols-outlined text-[18px]" id="theme-toggle-icon">dark_mode</span>
+      </button>
+      <div class="relative">
+        <button class="relative w-9 h-9 rounded-full p-0.5 bg-white shadow-md border border-[#CBDDE1] overflow-hidden transition active:scale-90 hover:ring-3 focus:outline-none ring-2 ring-[#23CED9] group" onclick="openProfileModal()" title="View &amp; Edit Travel Profile">
+          <img alt="User traveler avatar" class="w-full h-full object-cover rounded-full" id="header-user-avatar" src="https://picsum.photos/seed/manatee/400/400"/>
+        </button>
+        <span class="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-[#A1CCA6] border-2 border-white flex items-center justify-center pointer-events-none" title="Online Co-author">
+          <span class="w-1 h-1 bg-white rounded-full"></span>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- FLOATING MAP CONTROLS (STACKED RIGHT) -->
+  <div class="relative z-20 px-4 flex flex-col items-end space-y-2 pointer-events-none mt-2 w-full">
+    <button class="pointer-events-auto w-10 h-10 rounded-xl glass-control shadow-md shadow-black/10 flex items-center justify-center text-[#097C87] hover:text-[#097C87]/80 active:scale-90 transition group" onclick="centerMapOnCurrentPin()" title="Recenter on Active Location (Key West)">
+      <span class="material-symbols-outlined text-[20px] text-[#097C87] group-hover:rotate-45 transition-transform duration-300">explore</span>
+    </button>
+    <button class="pointer-events-auto w-10 h-10 rounded-xl glass-control shadow-md shadow-black/10 flex items-center justify-center text-[#097C87] active:scale-90 transition" onclick="zoomInMap()" title="Zoom In">
+      <span class="material-symbols-outlined text-[20px] text-[#097C87]">add</span>
+    </button>
+    <button class="pointer-events-auto w-10 h-10 rounded-xl glass-control shadow-md shadow-black/10 flex items-center justify-center text-[#097C87] active:scale-90 transition" onclick="zoomOutMap()" title="Zoom Out">
+      <span class="material-symbols-outlined text-[20px] text-[#097C87]">remove</span>
+    </button>
+    <button class="pointer-events-auto w-10 h-10 rounded-xl glass-control shadow-md shadow-black/10 flex items-center justify-center active:scale-90 transition relative" onclick="toggleFriendsLayer()" title="Toggle Friends on Map">
+      <span class="material-symbols-outlined text-[20px] text-[#097C87]">group</span>
+      <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#FCA47C] ring-1 ring-white"></span>
+    </button>
+    <button class="pointer-events-auto w-10 h-10 rounded-xl glass-control shadow-md shadow-black/10 flex items-center justify-center active:scale-90 transition" onclick="centerMapOnCurrentPin()" title="Re-center on latest step">
+      <span class="material-symbols-outlined text-[20px] text-[#23CED9] fill-1">my_location</span>
+    </button>
+    <div class="pointer-events-auto px-2.5 py-1 rounded-lg glass-control shadow-xs flex items-center space-x-1 text-[10px] font-bold text-[#097C87]">
+      <span class="material-symbols-outlined text-[12px] text-[#A1CCA6]">cloud_sync</span>
+      <span class="tracking-tight">Live Trip</span>
+    </div>
+  </div>
+
+  <!-- BOTTOM INTERACTION SHEET -->
+  <div class="relative z-30 w-full mt-auto pointer-events-none">
+    <div class="pointer-events-auto w-full bg-surface-container-lowest rounded-t-[2rem] shadow-[0_-16px_36px_rgba(9,124,135,0.14)] border-t border-white px-5 pt-3 safe-bottom transition-all">
+      <div class="w-11 h-1.5 bg-[#CBDDE1] rounded-full mx-auto mb-3 cursor-pointer hover:bg-[#097C87]/40 transition" onclick="centerMapOnCurrentPin()"></div>
+      <div class="flex items-start justify-between gap-2 mb-2.5">
+        <div class="space-y-0.5 min-w-0">
+          <div class="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-[#E5F7FB] border border-[#CBDDE1]/60">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#23CED9]"></span>
+            <span class="text-[9.5px] font-extrabold text-[#097C87] tracking-wider uppercase">DAY 4 · ATLANTIC COAST &amp; KEYS</span>
+          </div>
+          <h1 class="text-lg font-extrabold text-[#0E1E21] tracking-tight leading-snug truncate">Florida Coastal Trip</h1>
+          <p class="text-xs font-medium text-slate-500 truncate">St. Augustine to Key West · Scenic Highway A1A</p>
+        </div>
+        <button class="shrink-0 px-3 py-2 rounded-xl bg-gradient-to-r from-[#097C87] to-[#07666f] text-white flex items-center space-x-1.5 shadow-md shadow-[#097C87]/25 active:scale-95 transition focus:outline-none" onclick="toggleTripStoryModal()">
+          <span class="material-symbols-outlined text-[16px] text-[#23CED9]">menu_book</span>
+          <span class="text-xs font-extrabold">Trip Story</span>
+        </button>
+      </div>
+
+      <!-- Traveling companion card -->
+      <div class="mb-2.5 px-3 py-2 rounded-2xl bg-[#FFFDF4] border border-[#F9D779]/50 flex items-center justify-between gap-2 cursor-pointer hover:bg-[#FFF9E6] transition" onclick="openInviteModal()">
+        <div class="flex items-center space-x-2.5 min-w-0">
+          <div class="flex -space-x-1.5 overflow-hidden shrink-0">
+            <img alt="User avatar" class="inline-block h-6 w-6 rounded-full ring-2 ring-white object-cover companion-sync-avatar" src="https://picsum.photos/seed/dolphin/400/400"/>
+            <div class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-[#23CED9] ring-2 ring-white text-[9px] font-extrabold text-white">LK</div>
+            <div class="inline-flex items-center justify-center h-6 w-6 rounded-full bg-[#FCA47C] ring-2 ring-white text-[9px] font-extrabold text-white">+2</div>
+          </div>
+          <div class="min-w-0">
+            <p class="text-xs font-bold text-[#0E1E21] leading-tight truncate">Traveling with Emma, Liam &amp; 2 friends</p>
+            <p class="text-[10px] text-[#9C7507] font-semibold truncate">Emma posted 4 new sunset memories</p>
+          </div>
+        </div>
+        <button class="text-[#097C87] text-xs font-extrabold flex items-center space-x-0.5 shrink-0 focus:outline-none">
+          <span>View</span>
+          <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+        </button>
+      </div>
+
+      <!-- Latest Journal Note snippet -->
+      <div class="mb-3 px-3 py-2 rounded-xl bg-gradient-to-r from-[#E5F7FB] to-[#EEFCFF] border border-[#CBDDE1]/70 flex items-center justify-between gap-2 cursor-pointer hover:border-[#23CED9] transition" onclick="openWaypointModal('keywest')">
+        <div class="flex items-center space-x-2.5 min-w-0 flex-1">
+          <div class="w-7 h-7 rounded-lg bg-[#A1CCA6]/30 flex items-center justify-center text-[#097C87] shrink-0">
+            <span class="material-symbols-outlined text-[16px] text-[#097C87]">auto_stories</span>
+          </div>
+          <div class="min-w-0 flex-1">
+            <p class="text-[10px] font-bold uppercase text-[#097C87] tracking-wider">Latest Journal Note</p>
+            <p class="text-xs font-bold text-[#0E1E21] leading-tight truncate" id="latest-note-title">“Sunset over Mallory Square, Key West...”</p>
+          </div>
+        </div>
+        <div class="flex items-center space-x-1.5 shrink-0">
+          <span class="text-[10px] font-bold text-[#FCA47C] bg-white px-2 py-0.5 rounded-full border border-[#FCA47C]/40" id="total-pins-badge">4 Stops</span>
+        </div>
+      </div>
+
+      <!-- Action Buttons Row -->
+      <div class="flex items-center space-x-2">
+        <button class="flex-1 flex items-center justify-center space-x-1.5 py-3 px-3 rounded-2xl bg-[#097C87] hover:bg-[#07666f] active:scale-[0.98] text-white font-extrabold text-xs sm:text-sm teal-glow transition focus:outline-none shadow-md shadow-[#097C87]/25" onclick="openAddStopModal()">
+          <span class="material-symbols-outlined text-[18px] text-[#23CED9]">add_location_alt</span>
+          <span>+ Place Marker</span>
+        </button>
+        <button class="flex-1 flex items-center justify-center space-x-1.5 py-3 px-3 rounded-2xl bg-[#FCA47C] hover:bg-[#fa9466] active:scale-[0.98] text-white font-bold text-xs sm:text-sm coral-glow transition focus:outline-none shadow-md shadow-[#FCA47C]/25" onclick="openAddMemoryModal()">
+          <span class="material-symbols-outlined text-[18px]">add_photo_alternate</span>
+          <span>+ Add Memory</span>
+        </button>
+        <button class="w-11 h-11 rounded-2xl bg-[#EEFCFF] hover:bg-[#DFF1F5] active:scale-95 border border-[#CBDDE1] flex items-center justify-center text-[#097C87] transition focus:outline-none shrink-0" onclick="shareTripLink()" title="Share Trip Link">
+          <span class="material-symbols-outlined text-[19px]">ios_share</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION POPUP -->
+  <div class="absolute top-16 left-1/2 -translate-x-1/2 z-50 pointer-events-none transition-all duration-300 transform flex items-center space-x-2 bg-[#0E1E21]/95 text-white px-4 py-2.5 rounded-full shadow-2xl border border-white/20 text-xs font-semibold -translate-y-6 opacity-0 max-w-[90vw] truncate" id="toast-notification">
+    <span class="material-symbols-outlined text-[16px] text-[#23CED9] shrink-0" id="toast-icon">my_location</span>
+    <span class="truncate" id="toast-message">Centered on Key West active stop</span>
+  </div>
+
+  <!-- ================= POLARSTEPS USER PROFILE & AVATAR CHANGER MODAL ================= -->
+  <div class="fixed inset-0 z-50 hidden flex items-end justify-center" id="profile-modal">
+    <div class="absolute inset-0 modal-backdrop transition-opacity duration-300" onclick="closeProfileModal()"></div>
+    <div class="relative w-full bg-white rounded-t-[2.25rem] p-5 safe-bottom shadow-2xl z-10 space-y-4 max-h-[90dvh] overflow-y-auto hide-scrollbar">
+      <div class="w-11 h-1.5 bg-[#CBDDE1] rounded-full mx-auto cursor-pointer" onclick="closeProfileModal()"></div>
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <span class="material-symbols-outlined text-[20px] text-[#097C87]">badge</span>
+          <h3 class="text-base font-extrabold text-[#0E1E21]">Traveler Profile</h3>
+        </div>
+        <button class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 active:scale-95 transition" onclick="closeProfileModal()">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+      </div>
+      <!-- Profile Card Header -->
+      <div class="relative p-4 rounded-2xl bg-gradient-to-br from-[#EEFCFF] via-[#E5F7FB] to-[#FAFDFE] border border-[#CBDDE1]/80 shadow-xs flex items-center space-x-4">
+        <div class="relative shrink-0">
+          <div class="w-20 h-20 rounded-full p-1 bg-white shadow-md border-2 border-[#23CED9] overflow-hidden">
+            <img alt="User Avatar" class="w-full h-full object-cover rounded-full" id="profile-modal-avatar-preview" src="https://picsum.photos/seed/turtle/400/400"/>
+          </div>
+          <button class="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#097C87] text-white shadow-md border-2 border-white flex items-center justify-center hover:bg-[#07666f] active:scale-95 transition" onclick="triggerAvatarUploadTrigger()" title="Change Profile Photo">
+            <span class="material-symbols-outlined text-[14px] text-[#23CED9]">photo_camera</span>
+          </button>
+          <input accept="image/*" class="hidden" id="avatar-file-input" onchange="handleAvatarFileUpload(event)" type="file"/>
+        </div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center space-x-1.5">
+            <h4 class="text-sm font-black text-[#0E1E21] truncate" id="profile-name-text">Emma Harrison</h4>
+            <span class="material-symbols-outlined text-[15px] text-[#097C87]">verified</span>
+          </div>
+          <p class="text-[11px] font-semibold text-[#097C87] truncate">@emma.travels</p>
+          <div class="inline-flex items-center space-x-1 mt-1 px-2 py-0.5 rounded-full bg-white/90 border border-[#CBDDE1]/80 text-[9.5px] font-bold text-slate-600">
+            <span class="w-1.5 h-1.5 rounded-full bg-[#A1CCA6]"></span>
+            <span>Exploring Florida Keys</span>
+          </div>
+        </div>
+      </div>
+      <!-- Avatar Presets Picker -->
+      <div class="space-y-2 bg-[#F8FCFD] p-3 rounded-2xl border border-[#CBDDE1]/60">
+        <div class="flex items-center justify-between">
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-[#097C87]">Quick Avatar Presets</span>
+          <button class="text-[10.5px] font-bold text-[#FCA47C] hover:underline flex items-center space-x-0.5" onclick="triggerAvatarUploadTrigger()">
+            <span class="material-symbols-outlined text-[13px]">upload</span>
+            <span>Upload Own</span>
+          </button>
+        </div>
+        <div class="flex items-center justify-around pt-1">
+          <button class="w-11 h-11 rounded-full p-0.5 border-2 border-[#097C87] ring-2 ring-[#23CED9]/50 overflow-hidden active:scale-90 transition relative" onclick="selectAvatarPreset('https://picsum.photos/seed/manatee/400/400', 'Coastal Traveler')">
+            <img alt="Preset 1" class="w-full h-full object-cover rounded-full" src="https://picsum.photos/seed/manatee/400/400"/>
+          </button>
+          <button class="w-11 h-11 rounded-full p-0.5 border-2 border-transparent hover:border-[#097C87] overflow-hidden active:scale-90 transition" onclick="selectAvatarPreset('https://picsum.photos/seed/goat/400/400', 'Alpine Hiker')">
+            <img alt="Preset 2" class="w-full h-full object-cover rounded-full" src="https://picsum.photos/seed/goat/400/400"/>
+          </button>
+          <button class="w-11 h-11 rounded-full p-0.5 border-2 border-transparent hover:border-[#097C87] overflow-hidden active:scale-90 transition" onclick="selectAvatarPreset('https://picsum.photos/seed/bear/400/400', 'Backpacker Nomad')">
+            <img alt="Preset 3" class="w-full h-full object-cover rounded-full" src="https://picsum.photos/seed/bear/400/400"/>
+          </button>
+          <button class="w-11 h-11 rounded-full p-0.5 border-2 border-transparent hover:border-[#097C87] overflow-hidden active:scale-90 transition" onclick="selectAvatarPreset('https://picsum.photos/seed/wolf/400/400', 'Roadtripper')">
+            <img alt="Preset 4" class="w-full h-full object-cover rounded-full" src="https://picsum.photos/seed/wolf/400/400"/>
+          </button>
+          <button class="w-11 h-11 rounded-full p-0.5 border-2 border-transparent hover:border-[#097C87] overflow-hidden active:scale-90 transition" onclick="selectAvatarPreset('https://picsum.photos/seed/seal/400/400', 'Island Nomad')">
+            <img alt="Preset 5" class="w-full h-full object-cover rounded-full" src="https://picsum.photos/seed/seal/400/400"/>
+          </button>
+        </div>
+      </div>
+      <!-- Travel Stats Grid -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-[10.5px] font-black uppercase tracking-wider text-[#097C87]">Travel Statistics</span>
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <div class="p-2.5 rounded-2xl bg-[#EEFCFF] border border-[#CBDDE1]/70 text-center">
+            <span class="material-symbols-outlined text-[18px] text-[#097C87]">route</span>
+            <div class="text-base font-black text-[#0E1E21] leading-tight">14</div>
+            <div class="text-[9.5px] font-bold text-slate-500">Trips Tracked</div>
+            <span class="inline-block mt-0.5 text-[8px] font-extrabold text-[#097C87] bg-white px-1.5 py-0.2 rounded-full border border-[#097C87]/30">+4 this yr</span>
+          </div>
+          <div class="p-2.5 rounded-2xl bg-[#FFF6F1] border border-[#FCA47C]/40 text-center">
+            <span class="material-symbols-outlined text-[18px] text-[#FCA47C]">photo_library</span>
+            <div class="text-base font-black text-[#0E1E21] leading-tight">186</div>
+            <div class="text-[9.5px] font-bold text-slate-500">Posts Made</div>
+            <span class="inline-block mt-0.5 text-[8px] font-extrabold text-[#FCA47C] bg-white px-1.5 py-0.2 rounded-full border border-[#FCA47C]/30">snaps &amp; notes</span>
+          </div>
+          <div class="p-2.5 rounded-2xl bg-[#FFFDF4] border border-[#F9D779]/60 text-center">
+            <span class="material-symbols-outlined text-[18px] text-[#9C7507]">star</span>
+            <div class="text-base font-black text-[#0E1E21] leading-tight">42</div>
+            <div class="text-[9.5px] font-bold text-slate-500">Key Memories</div>
+            <span class="inline-block mt-0.5 text-[8px] font-extrabold text-[#9C7507] bg-white px-1.5 py-0.2 rounded-full border border-[#F9D779]">featured</span>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2 mt-2">
+          <div class="px-3 py-2 rounded-xl bg-white border border-[#CBDDE1] flex items-center space-x-2.5">
+            <div class="w-8 h-8 rounded-lg bg-[#23CED9]/20 flex items-center justify-center text-[#097C87] shrink-0">
+              <span class="material-symbols-outlined text-[18px] text-[#097C87]">public</span>
+            </div>
+            <div>
+              <div class="text-xs font-black text-[#0E1E21]">28 Countries</div>
+              <div class="text-[9.5px] text-slate-400 font-semibold">Visited around globe</div>
+            </div>
+          </div>
+          <div class="px-3 py-2 rounded-xl bg-white border border-[#CBDDE1] flex items-center space-x-2.5">
+            <div class="w-8 h-8 rounded-lg bg-[#A1CCA6]/30 flex items-center justify-center text-[#097C87] shrink-0">
+              <span class="material-symbols-outlined text-[18px] text-[#097C87]">calendar_month</span>
+            </div>
+            <div>
+              <div class="text-xs font-black text-[#0E1E21]">142 Days</div>
+              <div class="text-[9.5px] text-slate-400 font-semibold">On the road tracker</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Key Memories Highlights -->
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-[10.5px] font-black uppercase tracking-wider text-[#097C87]">Key Memories Highlights</span>
+          <span class="text-[10px] font-bold text-[#FCA47C]">3 of 42</span>
+        </div>
+        <div class="space-y-2">
+          <div class="p-2.5 rounded-xl bg-[#FAFDFE] border border-[#CBDDE1] flex items-center justify-between cursor-pointer hover:border-[#097C87] transition" onclick="closeProfileModal(); openWaypointModal('keywest');">
+            <div class="flex items-center space-x-2.5">
+              <img alt="Mallory Square" class="w-10 h-10 rounded-lg object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1Vn9tfbgaTGhyGukBtHtipzC9oWqjMkKKCs1wTBQ1IDCrlimEa5Aje8tut62cwkjFBjWrotn-Kke4_IjqLZvmhGEvDZEn88yZTY89nzpPklM-fvEQIMkAMseBzQKSkNrftca673yYJAZei8d3Zu3HUQyKUJdUuLX4nuv2N2CG537W74AGsEdfHrEJLykeaLRq6kwHWFztLPpgLXJk2EKcfpfpovMnIOGIDV_tENdFZT"/>
+              <div>
+                <div class="text-xs font-extrabold text-[#0E1E21]">Mallory Square Sunset</div>
+                <div class="text-[10px] text-slate-500">Florida Keys · 14 Likes</div>
+              </div>
+            </div>
+            <span class="material-symbols-outlined text-[16px] text-[#097C87]">chevron_right</span>
+          </div>
+          <div class="p-2.5 rounded-xl bg-[#FAFDFE] border border-[#CBDDE1] flex items-center justify-between cursor-pointer hover:border-[#097C87] transition" onclick="closeProfileModal(); selectTrip('alps');">
+            <div class="flex items-center space-x-2.5">
+              <img alt="Alps Sunrise" class="w-10 h-10 rounded-lg object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_6OpUw-70uW4h_6_9l9E4Pvd-1HrHKnZiH3Ixie2JA1OX2xZLzUwNXL877nQjcK9KyFvq5xkEB1nv3B0uhx4P_uGLC4a76SH0sOYxrOxj2CyFHyLmEkZN9XAkRblwF7stReCnipfV3gYefiRvpXmxbS8rJ-ZmGbL4XWLWInXUWi1VpkKhEC1zKXmBqFs11Az-7vzf6SbnbpUc809hq4w14F9UNX0vx4XzhsjbgZ8"/>
+              <div>
+                <div class="text-xs font-extrabold text-[#0E1E21]">Alps Sunrise Hike</div>
+                <div class="text-[10px] text-slate-500">Mont Blanc · 48 Likes</div>
+              </div>
+            </div>
+            <span class="material-symbols-outlined text-[16px] text-[#097C87]">chevron_right</span>
+          </div>
+          <div class="p-2.5 rounded-xl bg-[#FAFDFE] border border-[#CBDDE1] flex items-center justify-between cursor-pointer hover:border-[#097C87] transition" onclick="closeProfileModal(); selectTrip('canada');">
+            <div class="flex items-center space-x-2.5">
+              <img alt="Banff Lake" class="w-10 h-10 rounded-lg object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDNi-Tlm_CZzQNj8s1mG7kLXu-MUtxtejtqR26HDuV5iKLhZiGrjw4g_gvCUhHjrGUgM_VD4ObDEiOQwaVeyzhk4PQg6vnC3amak-Kh_V0E6TSbWJvmEhoguv7jkI0ojjWjgmKjARKsLYVRIpHpL3tQ7sgqy9Qwm4k0bWZyCO45T8O-vnErBI9jEnCLPKIFIIe1rCa6mspvENEjVVP5n7QYPeX1PztKEj7p53oCAMk"/>
+              <div>
+                <div class="text-xs font-extrabold text-[#0E1E21]">Banff Glacier Lake</div>
+                <div class="text-[10px] text-slate-500">Canadian Rockies · 39 Likes</div>
+              </div>
+            </div>
+            <span class="material-symbols-outlined text-[16px] text-[#097C87]">chevron_right</span>
+          </div>
+        </div>
+      </div>
+      <div class="pt-2 flex items-center space-x-2">
+        <button class="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold active:scale-95 transition" onclick="closeProfileModal()">Done</button>
+        <button class="flex-1 py-2.5 rounded-xl bg-[#097C87] hover:bg-[#07666f] text-white text-xs font-extrabold teal-glow active:scale-95 transition flex items-center justify-center space-x-1" onclick="showToast('Profile sync completed with Polarsteps!', 'cloud_done'); closeProfileModal();">
+          <span class="material-symbols-outlined text-[15px] text-[#23CED9]">sync</span>
+          <span>Sync Profile</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SIDEBAR TRIPS DRAWER -->
+  <div class="fixed inset-0 z-50 hidden" id="trips-drawer-container">
+    <div class="absolute inset-0 modal-backdrop transition-opacity duration-300 opacity-0" id="trips-drawer-backdrop" onclick="toggleTripsDrawer(false)"></div>
+    <div class="absolute inset-y-0 left-0 w-[85vw] max-w-sm bg-white shadow-2xl z-10 flex flex-col justify-between transform -translate-x-full transition-transform duration-300 ease-out border-r border-[#CBDDE1]" id="trips-drawer-panel">
+      <div class="safe-top px-5 pb-4 bg-gradient-to-b from-[#EEFCFF] to-white border-b border-[#DFF1F5]">
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center space-x-2.5">
+            <div class="w-9 h-9 rounded-xl bg-[#097C87] flex items-center justify-center text-white shadow-md shadow-[#097C87]/20">
+              <span class="material-symbols-outlined text-[20px] text-[#23CED9]">explore</span>
+            </div>
+            <div>
+              <h2 class="text-sm font-extrabold text-[#0E1E21] tracking-tight">WayStory</h2>
+              <span class="text-[10px] font-bold text-[#097C87] tracking-wider uppercase">Travel Logbook</span>
+            </div>
+          </div>
+          <button class="w-8 h-8 rounded-full bg-white shadow-sm border border-[#CBDDE1] flex items-center justify-center text-slate-500 hover:text-[#0E1E21] hover:bg-[#EEFCFF] active:scale-95 transition" onclick="toggleTripsDrawer(false)" title="Close Drawer">
+            <span class="material-symbols-outlined text-[18px]">close</span>
+          </button>
+        </div>
+        <div class="flex items-center justify-between p-2.5 rounded-2xl bg-white border border-[#CBDDE1]/70 shadow-xs cursor-pointer hover:border-[#097C87] transition" onclick="toggleTripsDrawer(false); openProfileModal();">
+          <div class="flex items-center space-x-2.5">
+            <img alt="User Profile" class="w-9 h-9 rounded-full object-cover ring-2 ring-[#23CED9] drawer-profile-avatar" src="https://picsum.photos/seed/manatee/400/400"/>
+            <div>
+              <h4 class="text-xs font-black text-[#0E1E21] leading-tight" id="drawer-user-name">Emma Harrison</h4>
+              <span class="text-[10px] font-semibold text-[#097C87]">14 journeys · 186 posts</span>
+            </div>
+          </div>
+          <span class="material-symbols-outlined text-[18px] text-slate-400">tune</span>
+        </div>
+      </div>
+      <div class="flex-1 overflow-y-auto px-4 py-3 space-y-3 hide-scrollbar">
+        <div class="flex items-center justify-between px-1">
+          <span class="text-[10.5px] font-black uppercase text-[#097C87] tracking-wider">Your Expeditions</span>
+          <span class="text-[10px] font-bold bg-[#E5F7FB] text-[#097C87] px-2 py-0.5 rounded-full border border-[#CBDDE1]/60">4 Total</span>
+        </div>
+        <div class="relative p-3 rounded-2xl bg-gradient-to-r from-[#EEFCFF] to-[#E5F7FB] border-2 border-[#097C87] shadow-sm cursor-pointer hover:shadow-md transition active:scale-[0.99]" onclick="selectTrip('florida')">
+          <div class="flex items-start space-x-3">
+            <div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 relative shadow-sm">
+              <img alt="Florida Keys" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1Vn9tfbgaTGhyGukBtHtipzC9oWqjMkKKCs1wTBQ1IDCrlimEa5Aje8tut62cwkjFBjWrotn-Kke4_IjqLZvmhGEvDZEn88yZTY89nzpPklM-fvEQIMkAMseBzQKSkNrftca673yYJAZei8d3Zu3HUQyKUJdUuLX4nuv2N2CG537W74AGsEdfHrEJLykeaLRq6kwHWFztLPpgLXJk2EKcfpfpovMnIOGIDV_tENdFZT"/>
+              <div class="absolute inset-0 bg-[#097C87]/20"></div>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between mb-0.5">
+                <span class="inline-flex items-center px-1.5 py-0.2 rounded-full bg-[#097C87] text-[8.5px] font-extrabold text-white tracking-wide uppercase">
+                  <span class="w-1 h-1 rounded-full bg-[#23CED9] mr-1 animate-pulse"></span>Active Now
+                </span>
+                <span class="text-[9.5px] font-bold text-[#FCA47C]">Day 4 of 6</span>
+              </div>
+              <h3 class="text-xs font-extrabold text-[#0E1E21] truncate">Florida Coastal Trip</h3>
+              <p class="text-[10px] text-slate-500 truncate" id="drawer-stops-count-text">St. Augustine to Key West · 4 Stops</p>
+            </div>
+          </div>
+          <div class="mt-2 pt-2 border-t border-[#CBDDE1]/50 flex items-center justify-between text-[10px] text-[#097C87] font-bold">
+            <span class="flex items-center space-x-1">
+              <span class="material-symbols-outlined text-[13px] text-[#FCA47C]">group</span>
+              <span>Shared with Emma &amp; 3 others</span>
+            </span>
+            <span class="material-symbols-outlined text-[16px] text-[#097C87]">arrow_forward</span>
+          </div>
+        </div>
+        <div class="p-3 rounded-2xl bg-white border border-[#CBDDE1] hover:border-[#097C87]/50 shadow-xs cursor-pointer hover:shadow-md transition active:scale-[0.99]" onclick="selectTrip('alps')">
+          <div class="flex items-start space-x-3">
+            <div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 relative bg-slate-100 shadow-sm">
+              <img alt="Alps Hiking" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_6OpUw-70uW4h_6_9l9E4Pvd-1HrHKnZiH3Ixie2JA1OX2xZLzUwNXL877nQjcK9KyFvq5xkEB1nv3B0uhx4P_uGLC4a76SH0sOYxrOxj2CyFHyLmEkZN9XAkRblwF7stReCnipfV3gYefiRvpXmxbS8rJ-ZmGbL4XWLWInXUWi1VpkKhEC1zKXmBqFs11Az-7vzf6SbnbpUc809hq4w14F9UNX0vx4XzhsjbgZ8"/>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between mb-0.5">
+                <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Aug 2024 · 8 Days</span>
+                <span class="text-[9px] font-bold text-[#A1CCA6] bg-[#A1CCA6]/15 px-1.5 py-0.5 rounded-full">Completed</span>
+              </div>
+              <h3 class="text-xs font-extrabold text-[#0E1E21] truncate">Hiking the Alps</h3>
+              <p class="text-[10px] text-slate-500 truncate">Tour du Mont Blanc · Switzerland &amp; France</p>
+            </div>
+          </div>
+          <div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-semibold">
+            <span>18 journal notes · 62 snaps</span>
+            <span class="text-[#097C87] font-bold flex items-center">Open <span class="material-symbols-outlined text-[14px]">chevron_right</span></span>
+          </div>
+        </div>
+        <div class="p-3 rounded-2xl bg-white border border-[#CBDDE1] hover:border-[#097C87]/50 shadow-xs cursor-pointer hover:shadow-md transition active:scale-[0.99]" onclick="selectTrip('canada')">
+          <div class="flex items-start space-x-3">
+            <div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 relative bg-slate-100 shadow-sm">
+              <img alt="Canada Banff" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDNi-Tlm_CZzQNj8s1mG7kLXu-MUtxtejtqR26HDuV5iKLhZiGrjw4g_gvCUhHjrGUgM_VD4ObDEiOQwaVeyzhk4PQg6vnC3amak-Kh_V0E6TSbWJvmEhoguv7jkI0ojjWjgmKjARKsLYVRIpHpL3tQ7sgqy9Qwm4k0bWZyCO45T8O-vnErBI9jEnCLPKIFIIe1rCa6mspvENEjVVP5n7QYPeX1PztKEj7p53oCAMk"/>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between mb-0.5">
+                <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">Jul 2024 · 12 Days</span>
+                <span class="text-[9px] font-bold text-[#A1CCA6] bg-[#A1CCA6]/15 px-1.5 py-0.5 rounded-full">Completed</span>
+              </div>
+              <h3 class="text-xs font-extrabold text-[#0E1E21] truncate">Canada</h3>
+              <p class="text-[10px] text-slate-500 truncate">Banff &amp; Jasper Rockies Expedition</p>
+            </div>
+          </div>
+          <div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-semibold">
+            <span>24 journal notes · 110 snaps</span>
+            <span class="text-[#097C87] font-bold flex items-center">Open <span class="material-symbols-outlined text-[14px]">chevron_right</span></span>
+          </div>
+        </div>
+        <div class="p-3 rounded-2xl bg-white border border-[#CBDDE1] hover:border-[#097C87]/50 shadow-xs cursor-pointer hover:shadow-md transition active:scale-[0.99]" onclick="selectTrip('route66')">
+          <div class="flex items-start space-x-3">
+            <div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 relative bg-slate-100 shadow-sm">
+              <img alt="Route 66" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAOLAtkZstBguJ7yNdqKkysdNzZmT5O2VwUVczItrjRK-4xW_wNHCA4KWIyQ-_6-C8lTFchGp6n-CU3D0LUCOnpdZvLM7-2Nf08GG1JRF2oTnEnzqO3NeyaOz45NTVQlnUMyEtdwFwHo0oIqisYZ0Ixh67I7JaZf2GrDce3azOHxpd31xEqS3dAFbBE7dSCpnyIDewDpLYnyw9JTp7RiqyLWdU8WzrPmc7YI3mvQqc"/>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between mb-0.5">
+                <span class="text-[9px] font-extrabold text-slate-400 uppercase tracking-wider">May 2024 · 14 Days</span>
+                <span class="text-[9px] font-bold text-[#A1CCA6] bg-[#A1CCA6]/15 px-1.5 py-0.5 rounded-full">Completed</span>
+              </div>
+              <h3 class="text-xs font-extrabold text-[#0E1E21] truncate">Route 66 Roadtrip</h3>
+              <p class="text-[10px] text-slate-500 truncate">Chicago to Santa Monica Pier</p>
+            </div>
+          </div>
+          <div class="mt-2 pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-semibold">
+            <span>31 journal notes · 145 snaps</span>
+            <span class="text-[#097C87] font-bold flex items-center">Open <span class="material-symbols-outlined text-[14px]">chevron_right</span></span>
+          </div>
+        </div>
+      </div>
+      <div class="p-4 safe-bottom border-t border-[#CBDDE1] bg-[#FAFDFE] space-y-2">
+        <button class="w-full py-2.5 px-4 rounded-xl bg-[#097C87] hover:bg-[#07666f] active:scale-95 text-white font-extrabold text-xs shadow-md shadow-[#097C87]/25 flex items-center justify-center space-x-2 transition" onclick="createNewTrip()">
+          <span class="material-symbols-outlined text-[18px] text-[#23CED9]">add_circle</span>
+          <span>+ New Trip</span>
+        </button>
+        <p class="text-[9.5px] text-center text-slate-400 font-medium">Live GPS tracking · OpenStreetMap</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- PLACE NEW STOP / MARKER MODAL -->
+  <div class="fixed inset-0 z-40 hidden flex items-end justify-center" id="add-stop-modal">
+    <div class="absolute inset-0 modal-backdrop transition-opacity" onclick="closeAddStopModal()"></div>
+    <div class="relative w-full bg-white rounded-t-[2.25rem] p-5 safe-bottom shadow-2xl z-10 space-y-3.5 max-h-[85dvh] overflow-y-auto hide-scrollbar">
+      <div class="w-10 h-1 bg-[#CBDDE1] rounded-full mx-auto"></div>
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="inline-block text-[9.5px] font-extrabold uppercase text-[#097C87] tracking-wider">ROADTRIP ROUTE</div>
+          <h3 class="text-base font-extrabold text-[#0E1E21]">Add Route Stop</h3>
+          <p class="text-[11px] text-slate-500">Pins automatically connect sequentially into the route</p>
+        </div>
+        <button class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition" onclick="closeAddStopModal()">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+      </div>
+      <div>
+        <label class="text-[10px] font-bold uppercase tracking-wider text-[#097C87] block mb-1">Quick Add Destination</label>
+        <div class="flex items-center space-x-1.5 overflow-x-auto pb-1 hide-scrollbar">
+          <button class="shrink-0 px-2.5 py-1 rounded-full bg-[#E5F7FB] border border-[#CBDDE1] text-[10.5px] font-bold text-[#097C87] hover:bg-[#097C87] hover:text-white transition" onclick="setPresetStop('Fort Lauderdale Beach', 26.1224, -80.1373, 'Scenic Vista', 'Iconic beachfront promenade lined with towering palms.')" type="button">
+            + Fort Lauderdale
+          </button>
+          <button class="shrink-0 px-2.5 py-1 rounded-full bg-[#E5F7FB] border border-[#CBDDE1] text-[10.5px] font-bold text-[#097C87] hover:bg-[#097C87] hover:text-white transition" onclick="setPresetStop('Everglades National Park', 25.2866, -80.8987, 'Camping &amp; Park', 'Airboat expedition across wild sawgrass and mangrove trails.')" type="button">
+            + Everglades
+          </button>
+          <button class="shrink-0 px-2.5 py-1 rounded-full bg-[#E5F7FB] border border-[#CBDDE1] text-[10.5px] font-bold text-[#097C87] hover:bg-[#097C87] hover:text-white transition" onclick="setPresetStop('Bahia Honda State Park', 24.6616, -81.2833, 'Snorkeling &amp; Reefs', 'Famous historic rail bridge vista and turquoise coral lagoon.')" type="button">
+            + Bahia Honda
+          </button>
+        </div>
+      </div>
+      <div class="space-y-2">
+        <label class="text-[10.5px] font-bold uppercase tracking-wider text-[#097C87]">Stop Name</label>
+        <input class="w-full bg-[#F4FAFB] border border-[#CBDDE1] rounded-xl px-3 py-2 text-xs font-semibold text-[#0E1E21] focus:ring-2 focus:ring-[#097C87] focus:outline-none" id="new-stop-name" placeholder="e.g. Bahia Honda State Park, Marathon" type="text" value="Islamorada Coral Reef"/>
+      </div>
+      <div class="space-y-2">
+        <label class="text-[10.5px] font-bold uppercase tracking-wider text-[#097C87]">Highlight or Category</label>
+        <select class="w-full bg-[#F4FAFB] border border-[#CBDDE1] rounded-xl px-3 py-2 text-xs font-semibold text-[#0E1E21] focus:ring-2 focus:ring-[#097C87] focus:outline-none" id="new-stop-category">
+          <option value="Snorkeling &amp; Reefs">🤿 Snorkeling &amp; Coral Reefs</option>
+          <option value="Scenic Vista">🌅 Scenic Beach &amp; Sunset</option>
+          <option value="Fresh Seafood">🦞 Coastal Diner / Seafood</option>
+          <option value="Camping &amp; Park">⛺ State Park &amp; Boardwalk</option>
+        </select>
+      </div>
+      <div class="space-y-2">
+        <label class="text-[10.5px] font-bold uppercase tracking-wider text-[#097C87]">Stop Note</label>
+        <textarea class="w-full bg-[#F4FAFB] border border-[#CBDDE1] rounded-xl p-2.5 text-xs text-[#0E1E21] focus:ring-2 focus:ring-[#097C87] focus:outline-none" id="new-stop-notes" placeholder="Why add this stop? E.g., crystal clear shallow flats, sunset kayak..." rows="2">Crystal blue sandbar with wild manatees and key lime milkshakes.</textarea>
+      </div>
+      <div class="p-3 bg-[#EEFCFF] border border-[#CBDDE1] rounded-xl flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <span class="material-symbols-outlined text-[#097C87] text-[20px]">touch_app</span>
+          <span class="text-[11px] font-bold text-[#097C87]">Or tap precisely on the live map</span>
+        </div>
+        <button class="px-2.5 py-1 bg-white text-[#097C87] border border-[#CBDDE1] text-[10px] font-extrabold rounded-lg hover:bg-[#E5F7FB] transition" onclick="triggerTapToPlace()">
+          Tap on Map
+        </button>
+      </div>
+      <div class="pt-2 flex items-center space-x-2">
+        <button class="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold active:scale-95 transition" onclick="closeAddStopModal()">Cancel</button>
+        <button class="flex-1 py-2.5 rounded-xl bg-[#097C87] hover:bg-[#07666f] text-white text-xs font-extrabold teal-glow active:scale-95 transition" onclick="confirmAddStop()">+ Connect to Route</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- WAYPOINT STORY MODAL / PREVIEW CARD -->
+  <div class="fixed inset-0 z-40 hidden flex items-end justify-center" id="waypoint-modal">
+    <div class="absolute inset-0 modal-backdrop transition-opacity" onclick="closeWaypointModal()"></div>
+    <div class="relative w-full bg-white rounded-t-[2.25rem] max-h-[85dvh] overflow-hidden flex flex-col shadow-2xl z-10 safe-bottom">
+      <div class="relative h-56 w-full bg-slate-900 overflow-hidden group">
+        <img alt="Location Photo" class="w-full h-full object-cover" id="wp-modal-image" src="https://lh3.googleusercontent.com/aida/AEtjO1Vn9tfbgaTGhyGukBtHtipzC9oWqjMkKKCs1wTBQ1IDCrlimEa5Aje8tut62cwkjFBjWrotn-Kke4_IjqLZvmhGEvDZEn88yZTY89nzpPklM-fvEQIMkAMseBzQKSkNrftca673yYJAZei8d3Zu3HUQyKUJdUuLX4nuv2N2CG537W74AGsEdfHrEJLykeaLRq6kwHWFztLPpgLXJk2EKcfpfpovMnIOGIDV_tENdFZT"/>
+        <button class="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 active:scale-95 transition-all" onclick="prevWaypointPhoto()" aria-label="Previous photo">
+          <span class="material-symbols-outlined text-[18px]">chevron_left</span>
+        </button>
+        <button class="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center hover:bg-black/60 active:scale-95 transition-all" onclick="nextWaypointPhoto()" aria-label="Next photo">
+          <span class="material-symbols-outlined text-[18px]">chevron_right</span>
+        </button>
+        <div class="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center space-x-1.5 bg-black/50 backdrop-blur-md px-2 py-1 rounded-full text-white text-[10px] font-bold">
+          <span id="wp-photo-counter">1</span>
+          <span class="text-[#23CED9]">of</span>
+          <span id="wp-photo-total">1</span>
+        </div>
+        <button class="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/75 active:scale-90 transition" onclick="closeWaypointModal()">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+        <div class="absolute bottom-2.5 left-3.5 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-full text-white text-[10px] font-bold flex items-center space-x-1">
+          <span class="material-symbols-outlined text-[13px] text-[#FCA47C]">location_on</span>
+          <span id="wp-modal-badge">Key West, FL</span>
+        </div>
+      </div>
+      <div class="p-4 overflow-y-auto hide-scrollbar space-y-3">
+        <div class="flex items-start justify-between">
+          <div>
+            <h3 class="text-base font-extrabold text-[#0E1E21]" id="wp-modal-title">Sunset over Mallory Square</h3>
+            <p class="text-[11px] font-medium text-slate-500" id="wp-modal-subtitle">Day 4 highlight · 6 photos</p>
+          </div>
+          <button class="flex items-center space-x-1 bg-[#FFF5F2] border border-[#FCA47C]/40 px-2.5 py-1 rounded-full text-[#FCA47C] active:scale-90 transition" onclick="likeCurrentPhoto()">
+            <span class="material-symbols-outlined text-[15px] fill-1 text-[#FCA47C]">favorite</span>
+            <span class="text-xs font-bold" id="wp-like-count">14</span>
+          </button>
+        </div>
+        <div class="flex items-center space-x-2 text-[11px] text-[#097C87] font-semibold bg-[#E5F7FB] px-2.5 py-1 rounded-lg">
+          <span class="material-symbols-outlined text-[14px]">group</span>
+          <span id="wp-modal-meta">Added by Emma &amp; You</span>
+        </div>
+        <div class="relative group" id="wp-note-container">
+          <p class="text-xs text-slate-700 leading-relaxed bg-[#F8FCFD] p-3 rounded-xl border border-[#CBDDE1]/50" id="wp-modal-text">
+            “Warm trade winds, conch fritters, and schooners drifting against the pink sky. Emma captured this right before twilight arrived!”
+          </p>
+          <textarea class="hidden w-full p-3 rounded-xl border border-[#097C87]/50 bg-white text-xs text-[#0E1E21] focus:ring-2 focus:ring-[#097C87] outline-none" id="wp-modal-text-edit" rows="3" onblur="saveWpNoteEdit()"></textarea>
+          <div class="hidden flex items-center space-x-2 mt-2" id="wp-note-edit-actions">
+            <button class="flex-1 py-2 rounded-xl border border-[#CBDDE1] text-slate-600 text-[10px] font-bold active:scale-95 transition" onclick="toggleWpNoteEdit()">Cancel</button>
+            <button class="flex-1 py-2 rounded-xl bg-[#097C87] text-white text-[10px] font-bold teal-glow active:scale-95 transition" onclick="saveWpNoteEdit()">Save</button>
+          </div>
+          <button class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-[#FCA47C]/20 text-[#FCA47C] flex items-center justify-center text-[12px] hover:bg-[#FCA47C]/30 transition" onclick="toggleWpNoteEdit()" title="Edit note">
+            <span class="material-symbols-outlined text-[14px]">edit</span>
+          </button>
+        </div>
+        <div class="flex items-center space-x-2 pt-1">
+          <button class="flex-1 py-2.5 rounded-xl bg-[#EEFCFF] text-[#097C87] border border-[#CBDDE1] font-bold text-xs flex items-center justify-center space-x-1 active:scale-95 transition" onclick="showToast('Memory pinned to favorites', 'bookmark')">
+            <span class="material-symbols-outlined text-[16px]">bookmark_add</span>
+            <span>Bookmark</span>
+          </button>
+          <button class="flex-1 py-2.5 rounded-xl bg-[#097C87] text-white font-bold text-xs flex items-center justify-center space-x-1 active:scale-95 transition" onclick="showToast('Shared waypoint with friends', 'send')">
+            <span class="material-symbols-outlined text-[16px] text-[#23CED9]">ios_share</span>
+            <span>Share Stop</span>
+          </button>
+          <button class="w-10 h-10 rounded-xl bg-[#FFF5F2] border border-[#FCA47C]/40 text-[#FCA47C] flex items-center justify-center active:scale-95 transition" onclick="confirmDeleteWaypoint()" title="Delete this stop from the route">
+            <span class="material-symbols-outlined text-[17px]">delete</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- INVITE COLLABORATORS MODAL -->
+  <div class="fixed inset-0 z-40 hidden flex items-end justify-center" id="invite-modal">
+    <div class="absolute inset-0 modal-backdrop" onclick="closeInviteModal()"></div>
+    <div class="relative w-full bg-white rounded-t-[2.25rem] p-5 safe-bottom shadow-2xl z-10 space-y-4">
+      <div class="w-10 h-1 bg-[#CBDDE1] rounded-full mx-auto"></div>
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-black text-[#0E1E21]">Invite Roadtrip Buddies</h3>
+          <p class="text-[11px] text-slate-500">Collaborators can pin photos &amp; add journal notes</p>
+        </div>
+        <button class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500" onclick="closeInviteModal()">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+      </div>
+      <div class="space-y-2">
+        <label class="text-[11px] font-bold uppercase tracking-wider text-[#097C87]">Add via email or username</label>
+        <div class="flex items-center space-x-2">
+          <input class="flex-1 bg-[#F4FAFB] border border-[#CBDDE1] rounded-xl px-3 py-2 text-xs text-[#0E1E21] focus:ring-2 focus:ring-[#097C87] focus:outline-none" id="invite-input" placeholder="e.g. emma@trip.co" type="text"/>
+          <button class="px-3.5 py-2 rounded-xl bg-[#097C87] text-white text-xs font-bold hover:bg-[#07666f] active:scale-95 transition" onclick="sendCollaboratorInvite()">
+            Invite
+          </button>
+        </div>
+      </div>
+      <div class="pt-2">
+        <div class="text-[11px] font-bold text-slate-600 mb-1.5">Or share instant invite link</div>
+        <div class="flex items-center justify-between gap-2 p-2.5 rounded-xl bg-[#EEFCFF] border border-[#CBDDE1]/80">
+          <span class="text-[11px] text-[#097C87] font-semibold truncate">https://tropic.journey/trip/florida-a1a?key=719</span>
+          <button class="shrink-0 px-2.5 py-1 bg-white border border-[#CBDDE1] text-[#097C87] text-[11px] font-bold rounded-lg hover:bg-slate-50 active:scale-95 transition flex items-center space-x-1" onclick="copyInviteLink()">
+            <span class="material-symbols-outlined text-[13px]">content_copy</span>
+            <span>Copy</span>
+          </button>
+        </div>
+      </div>
+      <div class="pt-1">
+        <p class="text-[10px] text-slate-400 text-center">3 travelers currently co-authoring this logbook</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD MEMORY MODAL -->
+  <div class="fixed inset-0 z-40 hidden flex items-end justify-center" id="add-memory-modal">
+    <div class="absolute inset-0 modal-backdrop" onclick="closeAddMemoryModal()"></div>
+    <div class="relative w-full bg-white rounded-t-[2.25rem] p-5 safe-bottom shadow-2xl z-10 space-y-3.5 max-h-[85dvh] overflow-y-auto hide-scrollbar">
+      <div class="w-10 h-1 bg-[#CBDDE1] rounded-full mx-auto"></div>
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-extrabold text-[#0E1E21]">Add Florida Memory</h3>
+          <p class="text-[11px] text-slate-500">Pin a snapshot to the live route map</p>
+        </div>
+        <button class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500" onclick="closeAddMemoryModal()">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+      </div>
+      <div class="space-y-2">
+        <label class="text-[10.5px] font-bold uppercase tracking-wider text-[#097C87]">Waypoint / Stop</label>
+        <select class="w-full bg-[#F4FAFB] border border-[#CBDDE1] rounded-xl px-3 py-2 text-xs font-semibold text-[#0E1E21] focus:ring-2 focus:ring-[#097C87] focus:outline-none" id="memory-location-select">
+          <option value="Key West · Sunset Pier">Key West · Sunset Pier</option>
+          <option value="Miami South Beach">Miami South Beach</option>
+          <option value="Palm Beach">Palm Beach</option>
+          <option value="Cape Canaveral">Cape Canaveral</option>
+          <option value="St. Augustine Old Town">St. Augustine Old Town</option>
+        </select>
+      </div>
+      <div class="space-y-2">
+        <label class="text-[10.5px] font-bold uppercase tracking-wider text-[#097C87]">Journal Note</label>
+        <textarea class="w-full bg-[#F4FAFB] border border-[#CBDDE1] rounded-xl p-2.5 text-xs text-[#0E1E21] focus:ring-2 focus:ring-[#097C87] focus:outline-none" id="memory-caption-input" placeholder="What made this moment unforgettable? E.g., sunset colors, sea spray, fresh lime pie..." rows="3"></textarea>
+      </div>
+      <div class="space-y-2">
+        <div class="p-3 border-2 border-dashed border-[#CBDDE1] rounded-xl flex items-center justify-center space-x-2 text-slate-500 bg-[#FAFDFE] cursor-pointer hover:border-[#FCA47C] transition" onclick="document.getElementById('memory-photo-input').click()">
+          <span class="material-symbols-outlined text-[#FCA47C]">add_a_photo</span>
+          <span class="text-xs font-bold text-slate-600">Attach photo or travel clip</span>
+        </div>
+        <input accept="image/*" class="hidden" id="memory-photo-input" onchange="handleMemoryPhotoUpload(event)" type="file"/>
+        <div id="memory-photo-preview" class="hidden flex items-center justify-between p-2 bg-[#EEFCFF] border border-[#23CED9]/50 rounded-xl">
+          <img id="memory-photo-preview-img" class="w-10 h-10 rounded-lg object-cover" src=""/>
+          <div class="text-[10px] font-bold text-[#097C87] truncate">Photo attached · tap to change</div>
+          <button class="text-[#FCA47C] text-[10px] font-bold" onclick="clearMemoryPhoto()">Remove</button>
+        </div>
+      </div>
+      <div class="pt-2 flex items-center space-x-2">
+        <button class="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold active:scale-95 transition" onclick="closeAddMemoryModal()">Cancel</button>
+        <button class="flex-1 py-2.5 rounded-xl bg-[#FCA47C] hover:bg-[#fa9466] text-white text-xs font-extrabold coral-glow active:scale-95 transition" onclick="submitNewMemory()">Post to Map</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRIP STORY / STORYBOOK MODAL -->
+  <div class="fixed inset-0 z-40 hidden flex items-end justify-center" id="story-modal">
+    <div class="absolute inset-0 modal-backdrop" onclick="toggleTripStoryModal()"></div>
+    <div class="relative w-full bg-white rounded-t-[2.25rem] p-5 safe-bottom shadow-2xl z-10 max-h-[88dvh] flex flex-col space-y-3.5">
+      <div class="w-10 h-1 bg-[#CBDDE1] rounded-full mx-auto"></div>
+      <div class="flex items-center justify-between">
+        <div>
+          <div class="inline-block text-[9px] font-black text-[#FCA47C] tracking-widest uppercase">STORYBOOK &amp; TIMELINE</div>
+          <h3 class="text-lg font-extrabold text-[#0E1E21]">Florida Coastal Story</h3>
+        </div>
+        <button class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500" onclick="toggleTripStoryModal()">
+          <span class="material-symbols-outlined text-[18px]">close</span>
+        </button>
+      </div>
+      <div class="overflow-y-auto space-y-3 hide-scrollbar pr-1 pb-2" id="story-timeline-container">
+        <div class="p-3 rounded-2xl bg-[#EEFCFF] border border-[#CBDDE1] flex space-x-3 cursor-pointer hover:border-[#097C87] transition" onclick="openWaypointModal('canaveral')">
+          <div class="w-12 h-12 rounded-xl bg-[#097C87]/20 flex items-center justify-center text-[#097C87] shrink-0 font-extrabold text-xs">
+            D1
+          </div>
+          <div>
+            <div class="text-[10px] font-bold text-[#097C87] uppercase">Cape Canaveral Space Coast</div>
+            <div class="text-xs font-bold text-[#0E1E21]">Launch pad tours &amp; wild ocean dunes</div>
+            <div class="text-[10px] text-slate-500 mt-0.5">3 entries · 6 photos</div>
+          </div>
+        </div>
+        <div class="p-3 rounded-2xl bg-[#FFFDF4] border border-[#F9D779]/60 flex space-x-3 cursor-pointer hover:border-[#FCA47C] transition" onclick="openWaypointModal('palmbeach')">
+          <div class="w-12 h-12 rounded-xl bg-[#F9D779]/40 flex items-center justify-center text-[#9C7507] shrink-0 font-extrabold text-xs">
+            D2
+          </div>
+          <div>
+            <div class="text-[10px] font-bold text-[#9C7507] uppercase">Palm Beach Breezes</div>
+            <div class="text-xs font-bold text-[#0E1E21]">A1A coastal cruise along the teal surf</div>
+            <div class="text-[10px] text-slate-500 mt-0.5">4 entries · 8 photos</div>
+          </div>
+        </div>
+        <div class="p-3 rounded-2xl bg-[#FFF6F1] border border-[#FCA47C]/40 flex space-x-3 cursor-pointer hover:border-[#FCA47C] transition" onclick="openWaypointModal('miami')">
+          <div class="w-12 h-12 rounded-xl bg-[#FCA47C]/30 flex items-center justify-center text-[#904C2B] shrink-0 font-extrabold text-xs">
+            D3
+          </div>
+          <div>
+            <div class="text-[10px] font-bold text-[#904C2B] uppercase">Miami Ocean Drive</div>
+            <div class="text-xs font-bold text-[#0E1E21]">Art Deco architecture &amp; night skyline</div>
+            <div class="text-[10px] text-slate-500 mt-0.5">5 entries · 14 photos</div>
+          </div>
+        </div>
+        <div class="p-3 rounded-2xl bg-gradient-to-r from-[#E5F7FB] to-[#EEFCFF] border-2 border-[#23CED9] flex space-x-3 cursor-pointer" onclick="openWaypointModal('keywest')">
+          <div class="w-12 h-12 rounded-xl bg-[#097C87] text-white flex items-center justify-center shrink-0 font-black text-xs">
+            NOW
+          </div>
+          <div>
+            <div class="text-[10px] font-extrabold text-[#097C87] uppercase">Key West · Mallory Sunset</div>
+            <div class="text-xs font-bold text-[#0E1E21]">Sunset over Mallory Square · Schooners &amp; conch party</div>
+            <div class="text-[10px] text-[#097C87] font-semibold mt-0.5">Active checkpoint · 6 photos</div>
+          </div>
+        </div>
+      </div>
+      <button class="w-full py-2.5 rounded-xl bg-[#097C87] text-white text-xs font-bold hover:bg-[#07666f] active:scale-95 transition" onclick="showToast('Exporting story album as PDF...', 'picture_as_pdf')">
+        Export Shared Storybook
+      </button>
+    </div>
   </div>
 </div>
-<div class="p-4 overflow-y-auto hide-scrollbar space-y-3">
-<div class="flex items-start justify-between">
-<div>
-<h3 class="text-base font-extrabold text-[#0E1E21]" id="wp-modal-title">Sunset over Mallory Square</h3>
-<p class="text-[11px] font-medium text-slate-500" id="wp-modal-subtitle">Day 4 highlight · 6 photos</p>
-</div>
-<button class="flex items-center space-x-1 bg-[#FFF5F2] border border-[#FCA47C]/40 px-2.5 py-1 rounded-full text-[#FCA47C] active:scale-90 transition" onclick="likeCurrentPhoto()">
-<span class="material-symbols-outlined text-[15px] fill-1 text-[#FCA47C]">favorite</span>
-<span class="text-xs font-bold" id="wp-like-count">14</span>
-</button>
-</div>
-<div class="flex items-center space-x-2 text-[11px] text-[#097C87] font-semibold bg-[#E5F7FB] px-2.5 py-1 rounded-lg">
-<span class="material-symbols-outlined text-[14px]">group</span>
-<span id="wp-modal-meta">Added by Emma &amp; You</span>
-</div>
-<div class="relative group" id="wp-note-container">
-  <p class="text-xs text-slate-700 leading-relaxed bg-[#F8FCFD] p-3 rounded-xl border border-[#CBDDE1]/50" id="wp-modal-text">
-    “Warm trade winds, conch fritters, and schooners drifting against the pink sky. Emma captured this right before twilight arrived!”
-  </p>
-  <textarea class="hidden w-full p-3 rounded-xl border border-[#097C87]/50 bg-white text-xs text-[#0E1E21] focus:ring-2 focus:ring-[#097C87] outline-none" id="wp-modal-text-edit" rows="3" onblur="saveWpNoteEdit()"></textarea>
-  <div class="hidden flex items-center space-x-2 mt-2" id="wp-note-edit-actions">
-    <button class="flex-1 py-2 rounded-xl border border-[#CBDDE1] text-slate-600 text-[10px] font-bold active:scale-95 transition" onclick="toggleWpNoteEdit()">Cancel</button>
-    <button class="flex-1 py-2 rounded-xl bg-[#097C87] text-white text-[10px] font-bold teal-glow active:scale-95 transition" onclick="saveWpNoteEdit()">Save</button>
-  </div>
-  <button class="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-[#FCA47C]/20 text-[#FCA47C] flex items-center justify-center text-[12px] hover:bg-[#FCA47C]/30 transition opacity-0 group-hover:opacity-100" onclick="toggleWpNoteEdit()" title="Edit note">
-    <span class="material-symbols-outlined">edit</span>
-  </button>
-  <button class="absolute top-1.5 right-7 w-6 h-6 rounded-full bg-[#FCA47C]/20 text-[#FCA47C] flex items-center justify-center text-[12px] hover:bg-[#FCA47C]/30 transition opacity-0 group-hover:opacity-100" onclick="confirmDeleteWaypoint()" title="Delete stop">
-    <span class="material-symbols-outlined">delete</span>
-  </button>
-</div>
-<div class="flex items-center space-x-2 pt-1">
-  <button class="flex-1 py-2.5 rounded-xl bg-[#EEFCFF] text-[#097C87] border border-[#CBDDE1] font-bold text-xs flex items-center justify-center space-x-1 active:scale-95 transition" onclick="showToast('Memory pinned to favorites', 'bookmark')">
-    <span class="material-symbols-outlined text-[16px]">bookmark_add</span>
-    <span class="">Bookmark</span>
-  </button>
-  <button class="flex-1 py-2.5 rounded-xl bg-[#097C87] text-white font-bold text-xs flex items-center justify-center space-x-1 active:scale-95 transition" onclick="showToast('Shared waypoint with friends', 'send')">
-    <span class="material-symbols-outlined text-[16px] text-[#23CED9]">ios_share</span>
-    <span class="">Share Stop</span>
-  </button>
-  <button class="w-10 h-10 rounded-xl bg-[#FFF5F2] border border-[#FCA47C]/40 text-[#FCA47C] flex items-center justify-center active:scale-95 transition" onclick="confirmDeleteWaypoint()" title="Delete this stop from the route">
-    <span class="material-symbols-outlined text-[17px]">delete</span>
-  </button>
-</div>
-</div>
-</div>
-</div>
-<!-- INVITE COLLABORATORS MODAL -->
-<div class="fixed inset-0 z-40 hidden flex items-end sm:items-center justify-center" id="invite-modal">
-<div class="absolute inset-0 modal-backdrop" onclick="closeInviteModal()"></div>
-<div class="relative w-full max-w-[390px] bg-white rounded-t-[2.25rem] p-5 shadow-2xl z-10 space-y-4">
-<div class="w-10 h-1 bg-[#CBDDE1] rounded-full mx-auto"></div>
-<div class="flex items-center justify-between">
-<div>
-<h3 class="text-base font-black text-[#0E1E21]">Invite Roadtrip Buddies</h3>
-<p class="text-[11px] text-slate-500">Collaborators can pin photos &amp; add journal notes</p>
-</div>
-<button class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500" onclick="closeInviteModal()">
-<span class="material-symbols-outlined text-[18px]">close</span>
-</button>
-</div>
-<div class="space-y-2">
-<label class="text-[11px] font-bold uppercase tracking-wider text-[#097C87]">Add via email or username</label>
-<div class="flex items-center space-x-2">
-<input class="flex-1 bg-[#F4FAFB] border border-[#CBDDE1] rounded-xl px-3 py-2 text-xs text-[#0E1E21] focus:ring-2 focus:ring-[#097C87] focus:outline-none" id="invite-input" placeholder="e.g. emma@trip.co" type="text"/>
-<button class="px-3.5 py-2 rounded-xl bg-[#097C87] text-white text-xs font-bold hover:bg-[#07666f] active:scale-95 transition" onclick="sendCollaboratorInvite()">
-  Invite
-</button>
-</div>
-</div>
-<div class="pt-2">
-<div class="text-[11px] font-bold text-slate-600 mb-1.5">Or share instant invite link</div>
-<div class="flex items-center justify-between p-2.5 rounded-xl bg-[#EEFCFF] border border-[#CBDDE1]/80">
-<span class="text-[11px] text-[#097C87] font-semibold truncate max-w-[220px]">https://tropic.journey/trip/florida-a1a?key=719</span>
-<button class="px-2.5 py-1 bg-white border border-[#CBDDE1] text-[#097C87] text-[11px] font-bold rounded-lg hover:bg-slate-50 active:scale-95 transition flex items-center space-x-1" onclick="copyInviteLink()">
-<span class="material-symbols-outlined text-[13px]">content_copy</span>
-<span class="">Copy</span>
-</button>
-</div>
-</div>
-<div class="pt-1">
-<p class="text-[10px] text-slate-400 text-center">3 travelers currently co-authoring this logbook</p>
-</div>
-</div>
-</div>
-<!-- ADD MEMORY MODAL -->
-<div class="fixed inset-0 z-40 hidden flex items-end sm:items-center justify-center" id="add-memory-modal">
-<div class="absolute inset-0 modal-backdrop" onclick="closeAddMemoryModal()"></div>
-<div class="relative w-full max-w-[390px] bg-white rounded-t-[2.25rem] p-5 shadow-2xl z-10 space-y-3.5 max-h-[85vh] overflow-y-auto hide-scrollbar">
-<div class="w-10 h-1 bg-[#CBDDE1] rounded-full mx-auto"></div>
-<div class="flex items-center justify-between">
-<div>
-<h3 class="text-base font-extrabold text-[#0E1E21]">Add Florida Memory</h3>
-<p class="text-[11px] text-slate-500">Pin a snapshot to the live route map</p>
-</div>
-<button class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500" onclick="closeAddMemoryModal()">
-<span class="material-symbols-outlined text-[18px]">close</span>
-</button>
-</div>
-<div class="space-y-2">
-<label class="text-[10.5px] font-bold uppercase tracking-wider text-[#097C87]">Waypoint / Stop</label>
-<select class="w-full bg-[#F4FAFB] border border-[#CBDDE1] rounded-xl px-3 py-2 text-xs font-semibold text-[#0E1E21] focus:ring-2 focus:ring-[#097C87] focus:outline-none" id="memory-location-select">
-<option value="Key West · Sunset Pier">Key West · Sunset Pier</option>
-<option value="Miami South Beach">Miami South Beach</option>
-<option value="Palm Beach">Palm Beach</option>
-<option value="Cape Canaveral">Cape Canaveral</option>
-<option value="St. Augustine Old Town">St. Augustine Old Town</option>
-</select>
-</div>
-<div class="space-y-2">
-<label class="text-[10.5px] font-bold uppercase tracking-wider text-[#097C87]">Journal Note</label>
-<textarea class="w-full bg-[#F4FAFB] border border-[#CBDDE1] rounded-xl p-2.5 text-xs text-[#0E1E21] focus:ring-2 focus:ring-[#097C87] focus:outline-none" id="memory-caption-input" placeholder="What made this moment unforgettable? E.g., sunset colors, sea spray, fresh lime pie..." rows="3"></textarea>
-</div>
-<div class="space-y-2">
-  <div class="p-3 border-2 border-dashed border-[#CBDDE1] rounded-xl flex items-center justify-center space-x-2 text-slate-500 bg-[#FAFDFE] cursor-pointer hover:border-[#FCA47C] transition" onclick="document.getElementById('memory-photo-input').click()">
-    <span class="material-symbols-outlined text-[#FCA47C]">add_a_photo</span>
-    <span class="text-xs font-bold text-slate-600">Attach photo or travel clip</span>
-  </div>
-  <input accept="image/*" class="hidden" id="memory-photo-input" onchange="handleMemoryPhotoUpload(event)" type="file"/>
-  <div id="memory-photo-preview" class="hidden flex items-center justify-between p-2 bg-[#EEFCFF] border border-[#23CED9]/50 rounded-xl">
-    <img id="memory-photo-preview-img" class="w-10 h-10 rounded-lg object-cover" src=""/>
-    <div class="text-[10px] font-bold text-[#097C87] truncate max-w-[140px]">Photo attached · tap to change</div>
-    <button class="text-[#FCA47C] text-[10px] font-bold" onclick="clearMemoryPhoto()">Remove</button>
-  </div>
-</div>
-<div class="pt-2 flex items-center space-x-2">
-<button class="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold active:scale-95 transition" onclick="closeAddMemoryModal()">Cancel</button>
-<button class="flex-1 py-2.5 rounded-xl bg-[#FCA47C] hover:bg-[#fa9466] text-white text-xs font-extrabold coral-glow active:scale-95 transition" onclick="submitNewMemory()">Post to Map</button>
-</div>
-</div>
-</div>
-<!-- TRIP STORY / STORYBOOK MODAL -->
-<div class="fixed inset-0 z-40 hidden flex items-end sm:items-center justify-center" id="story-modal">
-<div class="absolute inset-0 modal-backdrop" onclick="toggleTripStoryModal()"></div>
-<div class="relative w-full max-w-[390px] bg-white rounded-t-[2.25rem] p-5 shadow-2xl z-10 max-h-[88vh] flex flex-col space-y-3.5">
-<div class="w-10 h-1 bg-[#CBDDE1] rounded-full mx-auto"></div>
-<div class="flex items-center justify-between">
-<div>
-<div class="inline-block text-[9px] font-black text-[#FCA47C] tracking-widest uppercase">STORYBOOK &amp; TIMELINE</div>
-<h3 class="text-lg font-extrabold text-[#0E1E21]">Florida Coastal Story</h3>
-</div>
-<button class="w-7 h-7 rounded-full bg-slate-100 flex items-center justify-center text-slate-500" onclick="toggleTripStoryModal()">
-<span class="material-symbols-outlined text-[18px]">close</span>
-</button>
-</div>
-<div class="overflow-y-auto space-y-3 hide-scrollbar pr-1 pb-2" id="story-timeline-container">
-<div class="p-3 rounded-2xl bg-[#EEFCFF] border border-[#CBDDE1] flex space-x-3 cursor-pointer hover:border-[#097C87] transition" onclick="openWaypointModal('canaveral')">
-<div class="w-12 h-12 rounded-xl bg-[#097C87]/20 flex items-center justify-center text-[#097C87] shrink-0 font-extrabold text-xs">
-  D1
-</div>
-<div>
-<div class="text-[10px] font-bold text-[#097C87] uppercase">Cape Canaveral Space Coast</div>
-<div class="text-xs font-bold text-[#0E1E21]">Launch pad tours &amp; wild ocean dunes</div>
-<div class="text-[10px] text-slate-500 mt-0.5">3 entries · 6 photos</div>
-</div>
-</div>
-<div class="p-3 rounded-2xl bg-[#FFFDF4] border border-[#F9D779]/60 flex space-x-3 cursor-pointer hover:border-[#FCA47C] transition" onclick="openWaypointModal('palmbeach')">
-<div class="w-12 h-12 rounded-xl bg-[#F9D779]/40 flex items-center justify-center text-[#9C7507] shrink-0 font-extrabold text-xs">
-  D2
-</div>
-<div>
-<div class="text-[10px] font-bold text-[#9C7507] uppercase">Palm Beach Breezes</div>
-<div class="text-xs font-bold text-[#0E1E21]">A1A coastal cruise along the teal surf</div>
-<div class="text-[10px] text-slate-500 mt-0.5">4 entries · 8 photos</div>
-</div>
-</div>
-<div class="p-3 rounded-2xl bg-[#FFF6F1] border border-[#FCA47C]/40 flex space-x-3 cursor-pointer hover:border-[#FCA47C] transition" onclick="openWaypointModal('miami')">
-<div class="w-12 h-12 rounded-xl bg-[#FCA47C]/30 flex items-center justify-center text-[#904C2B] shrink-0 font-extrabold text-xs">
-  D3
-</div>
-<div>
-<div class="text-[10px] font-bold text-[#904C2B] uppercase">Miami Ocean Drive</div>
-<div class="text-xs font-bold text-[#0E1E21]">Art Deco architecture &amp; night skyline</div>
-<div class="text-[10px] text-slate-500 mt-0.5">5 entries · 14 photos</div>
-</div>
-</div>
-<div class="p-3 rounded-2xl bg-gradient-to-r from-[#E5F7FB] to-[#EEFCFF] border-2 border-[#23CED9] flex space-x-3 cursor-pointer" onclick="openWaypointModal('keywest')">
-<div class="w-12 h-12 rounded-xl bg-[#097C87] text-white flex items-center justify-center shrink-0 font-black text-xs">
-  NOW
-</div>
-<div>
-<div class="text-[10px] font-extrabold text-[#097C87] uppercase">Key West · Mallory Sunset</div>
-<div class="text-xs font-bold text-[#0E1E21]">Sunset over Mallory Square · Schooners &amp; conch party</div>
-<div class="text-[10px] text-[#097C87] font-semibold mt-0.5">Active checkpoint · 6 photos</div>
-</div>
-</div>
-</div>
-<button class="w-full py-2.5 rounded-xl bg-[#097C87] text-white text-xs font-bold hover:bg-[#07666f] active:scale-95 transition" onclick="showToast('Exporting story album as PDF...', 'picture_as_pdf')">
-  Export Shared Storybook
-</button>
-</div>
-</div>
+
 <!-- LEAFLET MAP INTEGRATION SCRIPT & INTERACTIVITY -->
 <script>
   const WAYPOINTS = {
@@ -1098,7 +1100,6 @@
         console.warn('Map tile failed to load:', tile);
       });
 
-      // Render route and markers right away without waiting for all tiles
       updateRoutePolyline();
       renderAllMapMarkers();
       renderAllFriendsMarkers();
@@ -1731,6 +1732,5 @@
     });
   });
 </script>
-</div>
 </body>
 </html>
