@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-
-<html lang="en"><head>
+<html lang="en">
+<head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
 <title>WayStory - Travel Tracker</title>
@@ -8,177 +8,177 @@
 <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 <!-- Leaflet JS & CSS (no access token required — OpenStreetMap tiles, GitHub-safe) -->
 <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    tailwind.config = {
-      darkMode: "class",
-      theme: {
-        extend: {
-          colors: {
-            brand: {
-              coral: "#FCA47C",
-              teal: "#097C87",
-              cyan: "#23CED9",
-              gold: "#F9D779",
-              sage: "#A1CCA6"
-            },
-            surface: "#EEFCFF",
-            "surface-dim": "#CBDDE1",
-            "surface-container": "#DFF1F5",
-            "surface-container-low": "#E5F7FB",
-            "surface-container-lowest": "#FFFFFF",
-            "on-surface": "#0E1E21"
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          brand: {
+            coral: "#FCA47C",
+            teal: "#097C87",
+            cyan: "#23CED9",
+            gold: "#F9D779",
+            sage: "#A1CCA6"
           },
-          fontFamily: {
-            sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif']
-          }
+          surface: "#EEFCFF",
+          "surface-dim": "#CBDDE1",
+          "surface-container": "#DFF1F5",
+          "surface-container-low": "#E5F7FB",
+          "surface-container-lowest": "#FFFFFF",
+          "on-surface": "#0E1E21"
+        },
+        fontFamily: {
+          sans: ['"Plus Jakarta Sans"', '-apple-system', 'BlinkMacSystemFont', 'sans-serif']
         }
       }
-    };
-  </script>
+    }
+  };
+</script>
 <style>
-    :root {
-      --surface: #EEFCFF;
-      --surface-dim: #CBDDE1;
-      --surface-container: #DFF1F5;
-      --surface-container-low: #E5F7FB;
-      --surface-container-lowest: #FFFFFF;
-      --on-surface: #0E1E21;
-    }
-    html.dark {
-      --surface: #0B1A1E;
-      --surface-dim: #1F3A40;
-      --surface-container: #122A2F;
-      --surface-container-low: #163238;
-      --surface-container-lowest: #0F2125;
-      --on-surface: #E8F2F4;
-    }
-    body {
-      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-      -webkit-font-smoothing: antialiased;
-      overscroll-behavior: none;
-      background-color: var(--surface-container-lowest);
-      color: var(--on-surface);
-    }
-    html.dark body {
-      background-color: var(--surface-container-lowest);
-      color: var(--on-surface);
-    }
-    /* Dark theme surface overrides */
-    html.dark #mobile-viewport,
-    html.dark .bg-white,
-    html.dark .bg-slate-100,
-    html.dark .bg-slate-200,
-    html.dark .bg-[#EEFCFF],
-    html.dark .bg-[#DFF1F5],
-    html.dark .bg-[#E5F7FB],
-    html.dark .bg-[#FAFDFE],
-    html.dark .bg-[#FFF6F1],
-    html.dark .bg-[#FFFDF4],
-    html.dark .bg-[#F8FCFD],
-    html.dark .bg-[#F4FAFB],
-    html.dark .bg-[#CBDDE1] {
-      background-color: var(--surface-container-lowest) !important;
-    }
-    html.dark .bg-surface {
-      background-color: var(--surface) !important;
-    }
-    html.dark .border,
-    html.dark .border-t,
-    html.dark .border-r,
-    html.dark .border-b {
-      border-color: var(--surface-dim) !important;
-    }
-    html.dark .glass-nav,
-    html.dark .glass-control {
-      background: rgba(11, 26, 30, 0.85) !important;
-      border-color: rgba(255, 255, 255, 0.12) !important;
-    }
-    html.dark .text-slate-500,
-    html.dark .text-slate-400,
-    html.dark .text-slate-600,
-    html.dark .text-slate-700 {
-      color: #7fa8b0 !important;
-    }
-    html.dark .text-slate-300 {
-      color: #5b8a93 !important;
-    }
-    html.dark .placeholder-slate-400::placeholder,
-    html.dark ::placeholder {
-      color: #5b8a93 !important;
-      opacity: 1 !important;
-    }
-    .glass-nav {
-      background: rgba(255, 255, 255, 0.85);
-      backdrop-filter: blur(18px);
-      -webkit-backdrop-filter: blur(18px);
-      border: 1px solid rgba(255, 255, 255, 0.7);
-    }
-    .glass-control {
-      background: rgba(255, 255, 255, 0.88);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border: 1px solid rgba(255, 255, 255, 0.7);
-    }
-    .coral-glow {
-      box-shadow: 0 8px 20px -4px rgba(252, 164, 124, 0.55);
-    }
-    .teal-glow {
-      box-shadow: 0 8px 20px -4px rgba(9, 124, 135, 0.45);
-    }
-    /* Pulse ring on current location */
-    @keyframes pulseRing {
-      0% { transform: scale(0.95); opacity: 0.9; }
-      50% { transform: scale(1.35); opacity: 0.2; }
-      100% { transform: scale(0.95); opacity: 0.9; }
-    }
-    .pulse-ring {
-      animation: pulseRing 2s ease-in-out infinite;
-    }
-    /* Smooth modal transitions */
-    .modal-backdrop {
-      background: rgba(14, 30, 33, 0.45);
-      backdrop-filter: blur(5px);
-      -webkit-backdrop-filter: blur(5px);
-    }
-    .hide-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-    .hide-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-    /* Placing mode cursor */
-    .placing-mode-cursor {
-      cursor: crosshair !important;
-    }
-    /* Leaflet container clean integration */
-    .leaflet-container {
-      z-index: 0 !important;
-      touch-action: none;
-    }
-    #map {
-      touch-action: none;
-      position: absolute;
-      inset: 0;
-    }
-    /* Ensure the map canvas receives drag events across its full area */
-    .leaflet-pane.leaflet-map-pane {
-      z-index: 0 !important;
-    }
-    .leaflet-pane.leaflet-tile-pane {
-      z-index: 1 !important;
-    }
-    .leaflet-container .leaflet-marker-icon,
-    .leaflet-container .leaflet-marker-shadow {
-      /* Our divIcon markers are fully custom; hide default marker artifacts */
-      display: none !important;
-    }
-  </style>
+  :root {
+    --surface: #EEFCFF;
+    --surface-dim: #CBDDE1;
+    --surface-container: #DFF1F5;
+    --surface-container-low: #E5F7FB;
+    --surface-container-lowest: #FFFFFF;
+    --on-surface: #0E1E21;
+  }
+  html.dark {
+    --surface: #0B1A1E;
+    --surface-dim: #1F3A40;
+    --surface-container: #122A2F;
+    --surface-container-low: #163238;
+    --surface-container-lowest: #0F2125;
+    --on-surface: #E8F2F4;
+  }
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
+    background-color: var(--surface-container-lowest);
+    color: var(--on-surface);
+  }
+  html.dark body {
+    background-color: var(--surface-container-lowest);
+    color: var(--on-surface);
+  }
+  /* Dark theme surface overrides */
+  html.dark #mobile-viewport,
+  html.dark .bg-white,
+  html.dark .bg-slate-100,
+  html.dark .bg-slate-200,
+  html.dark .bg-\[\#EEFCFF\],
+  html.dark .bg-\[\#DFF1F5\],
+  html.dark .bg-\[\#E5F7FB\],
+  html.dark .bg-\[\#FAFDFE\],
+  html.dark .bg-\[\#FFF6F1\],
+  html.dark .bg-\[\#FFFDF4\],
+  html.dark .bg-\[\#F8FCFD\],
+  html.dark .bg-\[\#F4FAFB\],
+  html.dark .bg-\[\#CBDDE1\] {
+    background-color: var(--surface-container-lowest) !important;
+  }
+  html.dark .bg-surface {
+    background-color: var(--surface) !important;
+  }
+  html.dark .border,
+  html.dark .border-t,
+  html.dark .border-r,
+  html.dark .border-b {
+    border-color: var(--surface-dim) !important;
+  }
+  html.dark .glass-nav,
+  html.dark .glass-control {
+    background: rgba(11, 26, 30, 0.85) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+  }
+  html.dark .text-slate-500,
+  html.dark .text-slate-400,
+  html.dark .text-slate-600,
+  html.dark .text-slate-700 {
+    color: #7fa8b0 !important;
+  }
+  html.dark .text-slate-300 {
+    color: #5b8a93 !important;
+  }
+  html.dark .placeholder-slate-400::placeholder,
+  html.dark ::placeholder {
+    color: #5b8a93 !important;
+    opacity: 1 !important;
+  }
+  .glass-nav {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+  }
+  .glass-control {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+  }
+  .coral-glow {
+    box-shadow: 0 8px 20px -4px rgba(252, 164, 124, 0.55);
+  }
+  .teal-glow {
+    box-shadow: 0 8px 20px -4px rgba(9, 124, 135, 0.45);
+  }
+  /* Pulse ring on current location */
+  @keyframes pulseRing {
+    0% { transform: scale(0.95); opacity: 0.9; }
+    50% { transform: scale(1.35); opacity: 0.2; }
+    100% { transform: scale(0.95); opacity: 0.9; }
+  }
+  .pulse-ring {
+    animation: pulseRing 2s ease-in-out infinite;
+  }
+  /* Smooth modal transitions */
+  .modal-backdrop {
+    background: rgba(14, 30, 33, 0.45);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .hide-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  /* Placing mode cursor */
+  .placing-mode-cursor {
+    cursor: crosshair !important;
+  }
+  /* Leaflet container clean integration */
+  .leaflet-container {
+    z-index: 0 !important;
+    touch-action: none;
+    pointer-events: auto !important;
+    cursor: grab;
+  }
+  .leaflet-container:active {
+    cursor: grabbing;
+  }
+  #map {
+    touch-action: none;
+    position: absolute;
+    inset: 0;
+    pointer-events: auto;
+  }
+  /* Allow custom divIcon markers to render cleanly without default white box */
+  .custom-mapbox-marker,
+  .friend-mapbox-marker {
+    background: transparent !important;
+    border: none !important;
+  }
+</style>
 </head>
 <body class="bg-slate-900 text-[#0E1E21] select-none overflow-hidden m-0 p-0 flex items-center justify-center min-h-screen">
 <!-- Mobile Viewport Container (390px width feel, full height) -->
@@ -212,16 +212,16 @@
 <button class="text-[11px] font-extrabold bg-white/20 hover:bg-white/30 px-2.5 py-0.5 rounded-full" onclick="togglePlaceMarkerMode(false)">Done</button>
 </div>
 <!-- GLASSMORPHIC TOP NAVIGATION BAR -->
-<header class="relative z-30 pt-11 px-4 flex items-center justify-between pointer-events-auto">
-<button class="w-10 h-10 rounded-2xl glass-nav text-[#097C87] shadow-lg shadow-[#097C87]/10 flex items-center justify-center transition active:scale-95 hover:bg-white focus:outline-none" onclick="toggleTripsDrawer(true)" title="My Trips Menu">
+<header class="relative z-30 pt-11 px-4 flex items-center justify-between pointer-events-none">
+<button class="pointer-events-auto w-10 h-10 rounded-2xl glass-nav text-[#097C87] shadow-lg shadow-[#097C87]/10 flex items-center justify-center transition active:scale-95 hover:bg-white focus:outline-none" onclick="toggleTripsDrawer(true)" title="My Trips Menu">
 <span class="material-symbols-outlined text-[21px] text-[#097C87]">menu</span>
 </button>
-<div class="px-3 py-1.5 rounded-full glass-nav shadow-lg shadow-black/5 flex items-center space-x-1.5 border border-white/80">
+<div class="pointer-events-auto px-3 py-1.5 rounded-full glass-nav shadow-lg shadow-black/5 flex items-center space-x-1.5 border border-white/80">
 <span class="material-symbols-outlined text-[15px] text-[#097C87]">auto_stories</span>
 <span class="text-[11px] font-extrabold tracking-tight text-[#097C87]">Florida Coastal Trip</span>
 <span class="text-[9px] font-bold text-[#FCA47C] bg-[#FFF6F1] px-1.5 py-0.5 rounded-full border border-[#FCA47C]/40 uppercase tracking-wider">Shared</span>
 </div>
-<div class="flex items-center space-x-1.5">
+<div class="pointer-events-auto flex items-center space-x-1.5">
 <button class="h-9 px-2.5 rounded-full bg-[#097C87] text-white hover:bg-[#07666f] active:scale-95 shadow-md flex items-center space-x-1 text-[11px] font-bold transition focus:outline-none" onclick="openInviteModal()">
 <span class="material-symbols-outlined text-[15px] text-[#23CED9]">person_add</span>
 <span class="">Invite</span>
@@ -241,38 +241,38 @@
 </div>
 </div>
 </header>
-<!-- FLOATING MAP CONTROLS (STACKED RIGHT) -->
-<div class="relative z-20 px-3.5 flex flex-col items-end space-y-2 pointer-events-auto mt-2">
+<!-- FLOATING MAP CONTROLS (STACKED RIGHT) - pointer-events-none on full-width wrapper so center map remains interactive -->
+<div class="relative z-20 px-3.5 flex flex-col items-end space-y-2 pointer-events-none mt-2">
 <!-- Center on active pin / compass -->
-<button class="w-9 h-9 rounded-xl glass-control shadow-md shadow-black/10 flex items-center justify-center text-[#097C87] hover:text-[#097C87]/80 active:scale-90 transition group" onclick="centerMapOnCurrentPin()" title="Recenter on Active Location (Key West)">
+<button class="pointer-events-auto w-9 h-9 rounded-xl glass-control shadow-md shadow-black/10 flex items-center justify-center text-[#097C87] hover:text-[#097C87]/80 active:scale-90 transition group" onclick="centerMapOnCurrentPin()" title="Recenter on Active Location (Key West)">
 <span class="material-symbols-outlined text-[19px] text-[#097C87] group-hover:rotate-45 transition-transform duration-300">explore</span>
 </button>
 <!-- Zoom In -->
-<button class="w-9 h-9 rounded-xl glass-control shadow-md shadow-black/10 flex items-center justify-center text-[#097C87] active:scale-90 transition" onclick="zoomInMap()" title="Zoom In">
+<button class="pointer-events-auto w-9 h-9 rounded-xl glass-control shadow-md shadow-black/10 flex items-center justify-center text-[#097C87] active:scale-90 transition" onclick="zoomInMap()" title="Zoom In">
 <span class="material-symbols-outlined text-[19px] text-[#097C87]">add</span>
 </button>
 <!-- Zoom Out -->
-<button class="w-9 h-9 rounded-xl glass-control shadow-md shadow-black/10 flex items-center justify-center text-[#097C87] active:scale-90 transition" onclick="zoomOutMap()" title="Zoom Out">
+<button class="pointer-events-auto w-9 h-9 rounded-xl glass-control shadow-md shadow-black/10 flex items-center justify-center text-[#097C87] active:scale-90 transition" onclick="zoomOutMap()" title="Zoom Out">
 <span class="material-symbols-outlined text-[19px] text-[#097C87]">remove</span>
 </button>
 <!-- Friends indicator toggle -->
-<button class="w-9 h-9 rounded-xl glass-control shadow-md shadow-black/10 flex items-center justify-center active:scale-90 transition relative" onclick="toggleFriendsLayer()" title="Toggle Friends on Map">
+<button class="pointer-events-auto w-9 h-9 rounded-xl glass-control shadow-md shadow-black/10 flex items-center justify-center active:scale-90 transition relative" onclick="toggleFriendsLayer()" title="Toggle Friends on Map">
 <span class="material-symbols-outlined text-[19px] text-[#097C87]">group</span>
 <span class="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#FCA47C] ring-1 ring-white"></span>
 </button>
 <!-- Recenter button -->
-<button class="w-9 h-9 rounded-xl glass-control shadow-md shadow-black/10 flex items-center justify-center active:scale-90 transition" onclick="centerMapOnCurrentPin()" title="Re-center on latest step">
+<button class="pointer-events-auto w-9 h-9 rounded-xl glass-control shadow-md shadow-black/10 flex items-center justify-center active:scale-90 transition" onclick="centerMapOnCurrentPin()" title="Re-center on latest step">
 <span class="material-symbols-outlined text-[19px] text-[#23CED9] fill-1">my_location</span>
 </button>
 <!-- Live status pill -->
-<div class="px-2 py-1 rounded-lg glass-control shadow-xs flex items-center space-x-1 text-[10px] font-bold text-[#097C87]">
+<div class="pointer-events-auto px-2 py-1 rounded-lg glass-control shadow-xs flex items-center space-x-1 text-[10px] font-bold text-[#097C87]">
 <span class="material-symbols-outlined text-[12px] text-[#A1CCA6]">cloud_sync</span>
 <span class="tracking-tight">Live Trip</span>
 </div>
 </div>
 <!-- BOTTOM INTERACTION SHEET -->
-<div class="relative z-30 w-full mt-auto">
-<div class="bg-surface-container-lowest rounded-t-[2.25rem] shadow-[0_-16px_36px_rgba(9,124,135,0.14)] border-t border-white px-5 pt-3 pb-5 transition-all">
+<div class="relative z-30 w-full mt-auto pointer-events-none">
+<div class="pointer-events-auto bg-surface-container-lowest rounded-t-[2.25rem] shadow-[0_-16px_36px_rgba(9,124,135,0.14)] border-t border-white px-5 pt-3 pb-5 transition-all">
 <!-- Sheet drag pill handle -->
 <div class="w-11 h-1.5 bg-[#CBDDE1] rounded-full mx-auto mb-3 cursor-pointer hover:bg-[#097C87]/40 transition" onclick="centerMapOnCurrentPin()"></div>
 <div class="flex items-start justify-between mb-2.5">
@@ -394,23 +394,18 @@
 </button>
 </div>
 <div class="flex items-center justify-between pt-1">
-<!-- Preset 1 (Beach/Key West Explorer - Default) -->
 <button class="w-11 h-11 rounded-full p-0.5 border-2 border-[#097C87] ring-2 ring-[#23CED9]/50 overflow-hidden active:scale-90 transition relative" onclick="selectAvatarPreset('https://picsum.photos/seed/manatee/400/400', 'Coastal Traveler')">
 <img alt="Preset 1" class="w-full h-full object-cover rounded-full" src="https://picsum.photos/seed/manatee/400/400"/>
 </button>
-<!-- Preset 2 (Mountain Explorer) -->
 <button class="w-11 h-11 rounded-full p-0.5 border-2 border-transparent hover:border-[#097C87] overflow-hidden active:scale-90 transition" onclick="selectAvatarPreset('https://picsum.photos/seed/goat/400/400', 'Alpine Hiker')">
 <img alt="Preset 2" class="w-full h-full object-cover rounded-full" src="https://picsum.photos/seed/goat/400/400"/>
 </button>
-<!-- Preset 3 (Backpacker Nomad) -->
 <button class="w-11 h-11 rounded-full p-0.5 border-2 border-transparent hover:border-[#097C87] overflow-hidden active:scale-90 transition" onclick="selectAvatarPreset('https://picsum.photos/seed/bear/400/400', 'Backpacker Nomad')">
 <img alt="Preset 3" class="w-full h-full object-cover rounded-full" src="https://picsum.photos/seed/bear/400/400"/>
 </button>
-<!-- Preset 4 (Wanderer Solo) -->
 <button class="w-11 h-11 rounded-full p-0.5 border-2 border-transparent hover:border-[#097C87] overflow-hidden active:scale-90 transition" onclick="selectAvatarPreset('https://picsum.photos/seed/wolf/400/400', 'Roadtripper')">
 <img alt="Preset 4" class="w-full h-full object-cover rounded-full" src="https://picsum.photos/seed/wolf/400/400"/>
 </button>
-<!-- Preset 5 (Island Camper) -->
 <button class="w-11 h-11 rounded-full p-0.5 border-2 border-transparent hover:border-[#097C87] overflow-hidden active:scale-90 transition" onclick="selectAvatarPreset('https://picsum.photos/seed/seal/400/400', 'Island Nomad')">
 <img alt="Preset 5" class="w-full h-full object-cover rounded-full" src="https://picsum.photos/seed/seal/400/400"/>
 </button>
@@ -422,21 +417,18 @@
 <span class="text-[10.5px] font-black uppercase tracking-wider text-[#097C87]">Travel Statistics</span>
 </div>
 <div class="grid grid-cols-3 gap-2">
-<!-- Stat 1: Trips Tracked -->
 <div class="p-2.5 rounded-2xl bg-[#EEFCFF] border border-[#CBDDE1]/70 text-center">
 <span class="material-symbols-outlined text-[18px] text-[#097C87]">route</span>
 <div class="text-base font-black text-[#0E1E21] leading-tight">14</div>
 <div class="text-[9.5px] font-bold text-slate-500">Trips Tracked</div>
 <span class="inline-block mt-0.5 text-[8px] font-extrabold text-[#097C87] bg-white px-1.5 py-0.2 rounded-full border border-[#097C87]/30">+4 this yr</span>
 </div>
-<!-- Stat 2: Posts Made -->
 <div class="p-2.5 rounded-2xl bg-[#FFF6F1] border border-[#FCA47C]/40 text-center">
 <span class="material-symbols-outlined text-[18px] text-[#FCA47C]">photo_library</span>
 <div class="text-base font-black text-[#0E1E21] leading-tight">186</div>
 <div class="text-[9.5px] font-bold text-slate-500">Posts Made</div>
 <span class="inline-block mt-0.5 text-[8px] font-extrabold text-[#FCA47C] bg-white px-1.5 py-0.2 rounded-full border border-[#FCA47C]/30">snaps &amp; notes</span>
 </div>
-<!-- Stat 3: Key Memories -->
 <div class="p-2.5 rounded-2xl bg-[#FFFDF4] border border-[#F9D779]/60 text-center">
 <span class="material-symbols-outlined text-[18px] text-[#9C7507]">star</span>
 <div class="text-base font-black text-[#0E1E21] leading-tight">42</div>
@@ -444,7 +436,6 @@
 <span class="inline-block mt-0.5 text-[8px] font-extrabold text-[#9C7507] bg-white px-1.5 py-0.2 rounded-full border border-[#F9D779]">featured</span>
 </div>
 </div>
-<!-- Secondary Polarsteps Stats (Countries Visited & Days on Road) -->
 <div class="grid grid-cols-2 gap-2 mt-2">
 <div class="px-3 py-2 rounded-xl bg-white border border-[#CBDDE1] flex items-center space-x-2.5">
 <div class="w-8 h-8 rounded-lg bg-[#23CED9]/20 flex items-center justify-center text-[#097C87]">
@@ -473,7 +464,6 @@
 <span class="text-[10px] font-bold text-[#FCA47C]">3 of 42</span>
 </div>
 <div class="space-y-2">
-<!-- Highlight 1: Key West -->
 <div class="p-2.5 rounded-xl bg-[#FAFDFE] border border-[#CBDDE1] flex items-center justify-between cursor-pointer hover:border-[#097C87] transition" onclick="closeProfileModal(); openWaypointModal('keywest');">
 <div class="flex items-center space-x-2.5">
 <img alt="Mallory Square" class="w-10 h-10 rounded-lg object-cover" src="https://lh3.googleusercontent.com/aida/AEtjO1Vn9tfbgaTGhyGukBtHtipzC9oWqjMkKKCs1wTBQ1IDCrlimEa5Aje8tut62cwkjFBjWrotn-Kke4_IjqLZvmhGEvDZEn88yZTY89nzpPklM-fvEQIMkAMseBzQKSkNrftca673yYJAZei8d3Zu3HUQyKUJdUuLX4nuv2N2CG537W74AGsEdfHrEJLykeaLRq6kwHWFztLPpgLXJk2EKcfpfpovMnIOGIDV_tENdFZT"/>
@@ -484,7 +474,6 @@
 </div>
 <span class="material-symbols-outlined text-[16px] text-[#097C87]">chevron_right</span>
 </div>
-<!-- Highlight 2: Alps -->
 <div class="p-2.5 rounded-xl bg-[#FAFDFE] border border-[#CBDDE1] flex items-center justify-between cursor-pointer hover:border-[#097C87] transition" onclick="closeProfileModal(); selectTrip('alps');">
 <div class="flex items-center space-x-2.5">
 <img alt="Alps Sunrise" class="w-10 h-10 rounded-lg object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD_6OpUw-70uW4h_6_9l9E4Pvd-1HrHKnZiH3Ixie2JA1OX2xZLzUwNXL877nQjcK9KyFvq5xkEB1nv3B0uhx4P_uGLC4a76SH0sOYxrOxj2CyFHyLmEkZN9XAkRblwF7stReCnipfV3gYefiRvpXmxbS8rJ-ZmGbL4XWLWInXUWi1VpkKhEC1zKXmBqFs11Az-7vzf6SbnbpUc809hq4w14F9UNX0vx4XzhsjbgZ8"/>
@@ -495,7 +484,6 @@
 </div>
 <span class="material-symbols-outlined text-[16px] text-[#097C87]">chevron_right</span>
 </div>
-<!-- Highlight 3: Banff -->
 <div class="p-2.5 rounded-xl bg-[#FAFDFE] border border-[#CBDDE1] flex items-center justify-between cursor-pointer hover:border-[#097C87] transition" onclick="closeProfileModal(); selectTrip('canada');">
 <div class="flex items-center space-x-2.5">
 <img alt="Banff Lake" class="w-10 h-10 rounded-lg object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDNi-Tlm_CZzQNj8s1mG7kLXu-MUtxtejtqR26HDuV5iKLhZiGrjw4g_gvCUhHjrGUgM_VD4ObDEiOQwaVeyzhk4PQg6vnC3amak-Kh_V0E6TSbWJvmEhoguv7jkI0ojjWjgmKjARKsLYVRIpHpL3tQ7sgqy9Qwm4k0bWZyCO45T8O-vnErBI9jEnCLPKIFIIe1rCa6mspvENEjVVP5n7QYPeX1PztKEj7p53oCAMk"/>
@@ -519,11 +507,8 @@
 </div>
 <!-- SIDEBAR TRIPS DRAWER (SLIDES IN FROM LEFT) -->
 <div class="fixed inset-0 z-50 hidden" id="trips-drawer-container">
-<!-- Backdrop -->
 <div class="absolute inset-0 modal-backdrop transition-opacity duration-300 opacity-0" id="trips-drawer-backdrop" onclick="toggleTripsDrawer(false)"></div>
-<!-- Drawer panel -->
 <div class="absolute inset-y-0 left-0 w-[310px] max-w-[85vw] bg-white shadow-2xl z-10 flex flex-col justify-between transform -translate-x-full transition-transform duration-300 ease-out border-r border-[#CBDDE1]" id="trips-drawer-panel">
-<!-- Drawer Header -->
 <div class="pt-10 px-5 pb-4 bg-gradient-to-b from-[#EEFCFF] to-white border-b border-[#DFF1F5]">
 <div class="flex items-center justify-between mb-4">
 <div class="flex items-center space-x-2.5">
@@ -539,7 +524,6 @@
 <span class="material-symbols-outlined text-[18px]">close</span>
 </button>
 </div>
-<!-- User Profile Summary in Header -->
 <div class="flex items-center justify-between p-2.5 rounded-2xl bg-white border border-[#CBDDE1]/70 shadow-xs cursor-pointer hover:border-[#097C87] transition" onclick="toggleTripsDrawer(false); openProfileModal();">
 <div class="flex items-center space-x-2.5">
 <img alt="User Profile" class="w-9 h-9 rounded-full object-cover ring-2 ring-[#23CED9] drawer-profile-avatar" src="https://picsum.photos/seed/manatee/400/400"/>
@@ -551,13 +535,11 @@
 <span class="material-symbols-outlined text-[18px] text-slate-400">tune</span>
 </div>
 </div>
-<!-- Drawer Trip List Scrollable -->
 <div class="flex-1 overflow-y-auto px-4 py-3 space-y-3 hide-scrollbar">
 <div class="flex items-center justify-between px-1">
 <span class="text-[10.5px] font-black uppercase text-[#097C87] tracking-wider">Your Expeditions</span>
 <span class="text-[10px] font-bold bg-[#E5F7FB] text-[#097C87] px-2 py-0.5 rounded-full border border-[#CBDDE1]/60">4 Total</span>
 </div>
-<!-- Trip 1: Current Active Trip -->
 <div class="relative p-3 rounded-2xl bg-gradient-to-r from-[#EEFCFF] to-[#E5F7FB] border-2 border-[#097C87] shadow-sm cursor-pointer hover:shadow-md transition active:scale-[0.99]" onclick="selectTrip('florida')">
 <div class="flex items-start space-x-3">
 <div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 relative shadow-sm">
@@ -583,7 +565,6 @@
 <span class="material-symbols-outlined text-[16px] text-[#097C87]">arrow_forward</span>
 </div>
 </div>
-<!-- Trip 2: Hiking the Alps -->
 <div class="p-3 rounded-2xl bg-white border border-[#CBDDE1] hover:border-[#097C87]/50 shadow-xs cursor-pointer hover:shadow-md transition active:scale-[0.99]" onclick="selectTrip('alps')">
 <div class="flex items-start space-x-3">
 <div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 relative bg-slate-100 shadow-sm">
@@ -603,7 +584,6 @@
 <span class="text-[#097C87] font-bold flex items-center">Open <span class="material-symbols-outlined text-[14px]">chevron_right</span></span>
 </div>
 </div>
-<!-- Trip 3: Canada -->
 <div class="p-3 rounded-2xl bg-white border border-[#CBDDE1] hover:border-[#097C87]/50 shadow-xs cursor-pointer hover:shadow-md transition active:scale-[0.99]" onclick="selectTrip('canada')">
 <div class="flex items-start space-x-3">
 <div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 relative bg-slate-100 shadow-sm">
@@ -623,7 +603,6 @@
 <span class="text-[#097C87] font-bold flex items-center">Open <span class="material-symbols-outlined text-[14px]">chevron_right</span></span>
 </div>
 </div>
-<!-- Trip 4: Route 66 Roadtrip -->
 <div class="p-3 rounded-2xl bg-white border border-[#CBDDE1] hover:border-[#097C87]/50 shadow-xs cursor-pointer hover:shadow-md transition active:scale-[0.99]" onclick="selectTrip('route66')">
 <div class="flex items-start space-x-3">
 <div class="w-12 h-12 rounded-xl overflow-hidden shrink-0 relative bg-slate-100 shadow-sm">
@@ -644,13 +623,12 @@
 </div>
 </div>
 </div>
-<!-- Drawer Bottom Action: + New Trip -->
 <div class="p-4 border-t border-[#CBDDE1] bg-[#FAFDFE] space-y-2">
 <button class="w-full py-2.5 px-4 rounded-xl bg-[#097C87] hover:bg-[#07666f] active:scale-95 text-white font-extrabold text-xs shadow-md shadow-[#097C87]/25 flex items-center justify-center space-x-2 transition" onclick="createNewTrip()">
 <span class="material-symbols-outlined text-[18px] text-[#23CED9]">add_circle</span>
 <span>+ New Trip</span>
 </button>
-<p class="text-[9.5px] text-center text-slate-400 font-medium">Mapbox Live sync active · GPS tracking on</p>
+<p class="text-[9.5px] text-center text-slate-400 font-medium">Live GPS tracking · OpenStreetMap</p>
 </div>
 </div>
 </div>
@@ -669,19 +647,18 @@
 <span class="material-symbols-outlined text-[18px]">close</span>
 </button>
 </div>
-<!-- Preset Quick Stop Buttons -->
 <div>
 <label class="text-[10px] font-bold uppercase tracking-wider text-[#097C87] block mb-1">Quick Add Destination</label>
 <div class="flex items-center space-x-1.5 overflow-x-auto pb-1 hide-scrollbar">
 <button class="shrink-0 px-2.5 py-1 rounded-full bg-[#E5F7FB] border border-[#CBDDE1] text-[10.5px] font-bold text-[#097C87] hover:bg-[#097C87] hover:text-white transition" onclick="setPresetStop('Fort Lauderdale Beach', 26.1224, -80.1373, 'Scenic Vista', 'Iconic beachfront promenade lined with towering palms.')" type="button">
-      + Fort Lauderdale
-    </button>
+  + Fort Lauderdale
+</button>
 <button class="shrink-0 px-2.5 py-1 rounded-full bg-[#E5F7FB] border border-[#CBDDE1] text-[10.5px] font-bold text-[#097C87] hover:bg-[#097C87] hover:text-white transition" onclick="setPresetStop('Everglades National Park', 25.2866, -80.8987, 'Camping &amp; Park', 'Airboat expedition across wild sawgrass and mangrove trails.')" type="button">
-      + Everglades
-    </button>
+  + Everglades
+</button>
 <button class="shrink-0 px-2.5 py-1 rounded-full bg-[#E5F7FB] border border-[#CBDDE1] text-[10.5px] font-bold text-[#097C87] hover:bg-[#097C87] hover:text-white transition" onclick="setPresetStop('Bahia Honda State Park', 24.6616, -81.2833, 'Snorkeling &amp; Reefs', 'Famous historic rail bridge vista and turquoise coral lagoon.')" type="button">
-      + Bahia Honda
-    </button>
+  + Bahia Honda
+</button>
 </div>
 </div>
 <div class="space-y-2">
@@ -707,8 +684,8 @@
 <span class="text-[11px] font-bold text-[#097C87]">Or tap precisely on the live map</span>
 </div>
 <button class="px-2.5 py-1 bg-white text-[#097C87] border border-[#CBDDE1] text-[10px] font-extrabold rounded-lg hover:bg-[#E5F7FB] transition" onclick="triggerTapToPlace()">
-    Tap on Map
-  </button>
+  Tap on Map
+</button>
 </div>
 <div class="pt-2 flex items-center space-x-2">
 <button class="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-xs font-bold active:scale-95 transition" onclick="closeAddStopModal()">Cancel</button>
@@ -722,7 +699,6 @@
 <div class="relative w-full max-w-[390px] bg-white rounded-t-[2.25rem] sm:rounded-3xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl z-10 animate-in slide-in-from-bottom duration-300">
 <div class="relative h-56 w-full bg-slate-900 overflow-hidden group">
   <img alt="Location Photo" class="w-full h-full object-cover" id="wp-modal-image" src="https://lh3.googleusercontent.com/aida/AEtjO1Vn9tfbgaTGhyGukBtHtipzC9oWqjMkKKCs1wTBQ1IDCrlimEa5Aje8tut62cwkjFBjWrotn-Kke4_IjqLZvmhGEvDZEn88yZTY89nzpPklM-fvEQIMkAMseBzQKSkNrftca673yYJAZei8d3Zu3HUQyKUJdUuLX4nuv2N2CG537W74AGsEdfHrEJLykeaLRq6kwHWFztLPpgLXJk2EKcfpfpovMnIOGIDV_tENdFZT"/>
-  <!-- Photo carousel nav -->
   <button class="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-black/40 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-black/60 active:scale-95 transition-all" onclick="prevWaypointPhoto()" aria-label="Previous photo">
     <span class="material-symbols-outlined text-[18px]">chevron_left</span>
   </button>
@@ -888,7 +864,6 @@
 </button>
 </div>
 <div class="overflow-y-auto space-y-3 hide-scrollbar pr-1 pb-2" id="story-timeline-container">
-<!-- Story Day 1 -->
 <div class="p-3 rounded-2xl bg-[#EEFCFF] border border-[#CBDDE1] flex space-x-3 cursor-pointer hover:border-[#097C87] transition" onclick="openWaypointModal('canaveral')">
 <div class="w-12 h-12 rounded-xl bg-[#097C87]/20 flex items-center justify-center text-[#097C87] shrink-0 font-extrabold text-xs">
   D1
@@ -899,7 +874,6 @@
 <div class="text-[10px] text-slate-500 mt-0.5">3 entries · 6 photos</div>
 </div>
 </div>
-<!-- Story Day 2 -->
 <div class="p-3 rounded-2xl bg-[#FFFDF4] border border-[#F9D779]/60 flex space-x-3 cursor-pointer hover:border-[#FCA47C] transition" onclick="openWaypointModal('palmbeach')">
 <div class="w-12 h-12 rounded-xl bg-[#F9D779]/40 flex items-center justify-center text-[#9C7507] shrink-0 font-extrabold text-xs">
   D2
@@ -910,7 +884,6 @@
 <div class="text-[10px] text-slate-500 mt-0.5">4 entries · 8 photos</div>
 </div>
 </div>
-<!-- Story Day 3 -->
 <div class="p-3 rounded-2xl bg-[#FFF6F1] border border-[#FCA47C]/40 flex space-x-3 cursor-pointer hover:border-[#FCA47C] transition" onclick="openWaypointModal('miami')">
 <div class="w-12 h-12 rounded-xl bg-[#FCA47C]/30 flex items-center justify-center text-[#904C2B] shrink-0 font-extrabold text-xs">
   D3
@@ -921,7 +894,6 @@
 <div class="text-[10px] text-slate-500 mt-0.5">5 entries · 14 photos</div>
 </div>
 </div>
-<!-- Story Day 4 (Active) -->
 <div class="p-3 rounded-2xl bg-gradient-to-r from-[#E5F7FB] to-[#EEFCFF] border-2 border-[#23CED9] flex space-x-3 cursor-pointer" onclick="openWaypointModal('keywest')">
 <div class="w-12 h-12 rounded-xl bg-[#097C87] text-white flex items-center justify-center shrink-0 font-black text-xs">
   NOW
@@ -940,7 +912,6 @@
 </div>
 <!-- LEAFLET MAP INTEGRATION SCRIPT & INTERACTIVITY -->
 <script>
-  // WAYPOINTS DATA WITH REAL COORDINATES & ORDER SEQUENCE
   const WAYPOINTS = {
     canaveral: {
       id: 'canaveral',
@@ -1028,23 +999,20 @@
     }
   };
 
-  // Order array tracking sequential stops
   let waypointOrder = ['canaveral', 'palmbeach', 'miami', 'keywest'];
-
   let activeWpKey = 'keywest';
   let wpPhotoIndex = 0;
   let wpEditMode = false;
-  // OpenStreetMap standard tiles — free, no API key required, GitHub-safe
+
   const OSM_TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
   const OSM_ATTRIBUTION = '&copy; <a href="https://openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
   let map = null;
   let isPlaceModeActive = false;
   let mapMarkers = {};
-
-  // Selected quick preset coords (defaults to Islamorada)
   let pendingCustomCoords = { lng: -80.6278, lat: 24.9247 };
   let memoryPhotoUrl = null;
+
   const FRIENDS = [
     { id: 'friend-emma', name: 'Emma', lng: -81.75, lat: 24.62, avatar: 'https://picsum.photos/seed/manatee/400/400' },
     { id: 'friend-liam', name: 'Liam', lng: -81.85, lat: 24.50, avatar: 'https://picsum.photos/seed/dolphin/400/400' },
@@ -1054,7 +1022,6 @@
   let friendsLayerVisible = true;
   let mapFriendMarkers = {};
 
-  // Build sequential polyline coordinates connecting all markers in order
   function getSequentialRouteCoordinates() {
     const coords = [];
     waypointOrder.forEach((id) => {
@@ -1066,7 +1033,6 @@
     return coords;
   }
 
-  // Leaflet route polyline instances (stored so we can update/replace them)
   let routePolyline = null;
   let routeGlow = null;
   let routeDashed = null;
@@ -1111,17 +1077,16 @@
 
     try {
       map = L.map('map', {
-        center: [24.5557, -81.8048], // [lat, lng]
+        center: [24.5557, -81.8048],
         zoom: 10,
         attributionControl: false,
         zoomControl: false,
         dragging: true,
         touchZoom: true,
-        scrollWheelZoom: false,
+        scrollWheelZoom: true,
         bounceAtZoomLimits: false
       });
 
-      // Ensure Leaflet calculates correct container size immediately
       map.invalidateSize();
 
       let tileLayer = L.tileLayer(OSM_TILE_URL, {
@@ -1129,44 +1094,35 @@
         maxZoom: 19
       }).addTo(map);
 
-      // If tiles fail to load, show the fallback screen
       tileLayer.on('tileerror', (err, tile) => {
         console.warn('Map tile failed to load:', tile);
-        if (mapEl) mapEl.classList.add('hidden');
-        if (fallback) fallback.classList.remove('hidden');
-        showToast('Map tiles unavailable — check your connection', 'error_offline');
       });
 
-      // Once first tile loads, hide fallback and render markers
+      // Render route and markers right away without waiting for all tiles
+      updateRoutePolyline();
+      renderAllMapMarkers();
+      renderAllFriendsMarkers();
+
       tileLayer.once('load', () => {
         if (mapEl) mapEl.classList.remove('hidden');
         if (fallback) fallback.classList.add('hidden');
-
-        // Ensure Leaflet recalculates container dimensions
         map.invalidateSize();
-
-        // Draw the route polyline
-        updateRoutePolyline();
-
-        // Render custom DOM markers
-        renderAllMapMarkers();
-        renderAllFriendsMarkers();
       });
 
-      // Map tap handler for Placing Marker mode
       map.on('click', function(e) {
         if (isPlaceModeActive) {
           handleMapPlacedStop(e.latlng);
         }
       });
 
-      // Center on the active stop after Leaflet settles
-      setTimeout(() => centerMapOnCurrentPin(), 50);
+      setTimeout(() => {
+        map.invalidateSize();
+        centerMapOnCurrentPin();
+      }, 100);
     } catch (err) {
       console.error('Leaflet failed to initialize:', err);
       if (mapEl) mapEl.classList.add('hidden');
       if (fallback) fallback.classList.remove('hidden');
-      return;
     }
   }
 
@@ -1178,8 +1134,7 @@
     initMap();
   }
 
-  function createMarkerHtml(data, key) {
-    const poiColor = data.type === 'active' ? '#FCA47C' : (key === 'palmbeach' ? '#23CED9' : '#097C87');
+  function createMarkerHtml(data) {
     const poiIcon = data.poiIcon || data.icon || 'place';
 
     if (data.type === 'active') {
@@ -1196,7 +1151,7 @@
       return `
         <div class="relative w-9 h-9 rounded-full bg-white/95 backdrop-blur-md flex items-center justify-center shadow-lg border border-[#CBDDE1] cursor-pointer hover:scale-110 transition-transform" title="${data.title}">
           <span class="material-symbols-outlined text-[15px] text-[#FCA47C]">${poiIcon}</span>
-          <span class="absolute -right-1 -top-1 w-3 h-3 rounded-full bg-[#FCA47C] text-[7px] font-bold text-white flex items-center justify-center border border-white">${data.count || '●'}</span>
+          <span class="absolute -right-1 -top-1 w-3.5 h-3.5 rounded-full bg-[#FCA47C] text-[8px] font-bold text-white flex items-center justify-center border border-white">${data.count || '●'}</span>
         </div>
       `;
     } else {
@@ -1209,7 +1164,6 @@
   }
 
   function renderAllMapMarkers() {
-    // Clear existing markers
     Object.keys(mapMarkers).forEach(k => {
       if (mapMarkers[k]) mapMarkers[k].remove();
     });
@@ -1222,10 +1176,11 @@
       const icon = L.divIcon({
         html: html,
         className: 'custom-mapbox-marker cursor-pointer select-none',
-        popupAnchor: [0, 0]
+        iconSize: [40, 44],
+        iconAnchor: [20, 22],
+        popupAnchor: [0, -20]
       });
-      const marker = L.marker([wp.lat, wp.lng], { icon })
-        .addTo(map);
+      const marker = L.marker([wp.lat, wp.lng], { icon }).addTo(map);
       marker.on('click', (e) => {
         if (e.originalEvent) e.originalEvent.stopPropagation();
         openWaypointModal(key);
@@ -1233,7 +1188,6 @@
       mapMarkers[key] = marker;
     });
 
-    // Update stop counter badge
     const totalCount = waypointOrder.length;
     const badge = document.getElementById('total-pins-badge');
     if (badge) badge.textContent = `${totalCount} Stops`;
@@ -1241,15 +1195,14 @@
     if (drawerBadge) drawerBadge.textContent = `St. Augustine to Key West · ${totalCount} Stops`;
   }
 
-  // FRIENDS LAYER MARKERS
   function createFriendMarkerHtml(friend) {
     return `
-      <div class="relative flex flex-col items-center cursor-pointer select-none relative">
+      <div class="relative flex flex-col items-center cursor-pointer select-none group">
         <div class="relative flex flex-col items-center">
-          <div class="w-6 h-6 rounded-full overflow-hidden border-2 border-white shadow-md ring-2 ring-[#23CED9]/60">
+          <div class="w-7 h-7 rounded-full overflow-hidden border-2 border-white shadow-md ring-2 ring-[#23CED9]/60">
             <img alt="${friend.name}" class="w-full h-full object-cover" src="${friend.avatar}"/>
           </div>
-          <div class="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-[#0E1E21] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+          <div class="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-[#0E1E21] text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
             ${friend.name}
           </div>
         </div>
@@ -1272,15 +1225,15 @@
       const icon = L.divIcon({
         html: html,
         className: 'friend-mapbox-marker cursor-pointer select-none',
-        popupAnchor: [0, 0]
+        iconSize: [28, 28],
+        iconAnchor: [14, 14]
       });
-      const marker = L.marker([friend.lat, friend.lng], { icon })
-        .addTo(map);
+      const marker = L.marker([friend.lat, friend.lng], { icon }).addTo(map);
       marker.on('click', (e) => {
         if (e.originalEvent) e.originalEvent.stopPropagation();
         showToast(`${friend.name} is nearby on Highway A1A`, 'group');
         if (map) {
-          map.flyTo({ center: [friend.lat, friend.lng], zoom: 12, speed: 1.1 });
+          map.flyTo([friend.lat, friend.lng], 12, { animate: true, duration: 1.1 });
         }
       });
       mapFriendMarkers[friend.id] = marker;
@@ -1311,18 +1264,13 @@
     if (!map) return;
     const target = WAYPOINTS.keywest || WAYPOINTS[waypointOrder[waypointOrder.length - 1]];
     if (!target) return;
-    const lat = target.lat + 0.05;
+    const lat = target.lat - 0.05;
     const lng = target.lng;
     if (!isFinite(lat) || !isFinite(lng)) return;
-    map.flyTo({
-      center: [lat, lng],
-      zoom: 10,
-      speed: 1.2
-    });
+    map.flyTo([lat, lng], 10, { animate: true, duration: 1.2 });
     showToast(`Centered on ${target.title}`, 'my_location');
   }
 
-  // WAYPOINT MODAL & PREVIEW CARD
   function openWaypointModal(wpKey) {
     activeWpKey = wpKey;
     const data = WAYPOINTS[wpKey];
@@ -1338,18 +1286,13 @@
       document.getElementById('wp-modal-meta').textContent = data.meta;
     }
 
-    // Reset carousel & edit state
     wpPhotoIndex = 0;
     wpEditMode = false;
     updateWaypointPhotoCounter();
 
     document.getElementById('waypoint-modal').classList.remove('hidden');
     if (map) {
-      map.flyTo({
-        center: [data.lat + 0.03, data.lng],
-        zoom: Math.max(map.getZoom(), 10.5),
-        speed: 1.2
-      });
+      map.flyTo([data.lat - 0.03, data.lng], Math.max(map.getZoom(), 10.5), { animate: true, duration: 1.2 });
     }
   }
 
@@ -1365,7 +1308,6 @@
     }
   }
 
-  // WAYPOINT PHOTO CAROUSEL
   function updateWaypointPhotoCounter() {
     const data = WAYPOINTS[activeWpKey];
     if (!data) return;
@@ -1378,7 +1320,6 @@
     if (img && data.photos && data.photos.length) {
       img.src = data.photos[wpPhotoIndex];
     }
-    // Also keep subtitle photo count in sync when only one photo
     const subtitle = document.getElementById('wp-modal-subtitle');
     if (subtitle && data.subtitle) subtitle.textContent = data.subtitle;
   }
@@ -1399,7 +1340,6 @@
     showToast(`Photo ${wpPhotoIndex + 1} of ${data.photos.length}`, 'photo_library');
   }
 
-  // WAYPOINT NOTE EDIT
   function toggleWpNoteEdit() {
     const data = WAYPOINTS[activeWpKey];
     if (!data) return;
@@ -1437,7 +1377,6 @@
     document.getElementById('wp-note-container').classList.remove('ring-1', 'ring-[#097C87]');
   }
 
-  // DELETE WAYPOINT / STOP
   function confirmDeleteWaypoint() {
     if (!activeWpKey) return;
     const data = WAYPOINTS[activeWpKey];
@@ -1459,10 +1398,8 @@
     const drawerBadge = document.getElementById('drawer-stops-count-text');
     if (drawerBadge) drawerBadge.textContent = `St. Augustine to Key West · ${remaining} Stops`;
     showToast('Stop removed from route', 'delete');
-    // If no stops left, nothing more to do (empty state handled by map)
   }
 
-  // PLACE STOP / MARKER ACTIONS
   function openAddStopModal() {
     document.getElementById('add-stop-modal').classList.remove('hidden');
   }
@@ -1498,7 +1435,6 @@
     }
   }
 
-  // Inserts a new stop sequentially into the route by latitude order (north to south)
   function insertStopSequentially(newId, lat) {
     let inserted = false;
     for (let i = 0; i < waypointOrder.length; i++) {
@@ -1526,6 +1462,7 @@
       subtitle: `Sequential Stop #${stopIndex} · Connected`,
       text: "“New stop added directly on the live route. Connected sequentially to preceding and next stops!”",
       image: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&q=80",
+      photos: ["https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&q=80"],
       likes: 1,
       meta: "Added by Emma & You",
       lng: lngLat.lng,
@@ -1559,6 +1496,7 @@
       subtitle: "Sequential Stop · Newly Connected",
       text: note || "Crystal waters and ocean breeze on the overseas highway!",
       image: "https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&q=80",
+      photos: ["https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=1200&q=80"],
       likes: 3,
       meta: "Added by Emma",
       lng: lng,
@@ -1574,10 +1512,9 @@
 
     closeAddStopModal();
     showToast(`Connected "${name}" to Florida Coastal Trip route!`, 'route');
-    map.flyTo({ center: [lat + 0.03, lng], zoom: 10.5 });
+    map.flyTo([lat - 0.03, lng], 10.5, { animate: true, duration: 1.2 });
   }
 
-  // ================= PROFILE & AVATAR CHANGER =================
   function openProfileModal() {
     document.getElementById('profile-modal').classList.remove('hidden');
   }
@@ -1609,7 +1546,6 @@
     document.getElementById('header-user-avatar').src = imageUrl;
     document.getElementById('profile-modal-avatar-preview').src = imageUrl;
     
-    // Also sync the companion row thumbnail and drawer avatar
     const companionAv = document.querySelector('.companion-sync-avatar');
     if (companionAv) companionAv.src = imageUrl;
 
@@ -1619,7 +1555,6 @@
     showToast(`Profile photo updated: ${label}`, 'account_circle');
   }
 
-  // COLLABORATOR INVITE MODAL
   function openInviteModal() {
     document.getElementById('invite-modal').classList.remove('hidden');
   }
@@ -1642,7 +1577,6 @@
     }
   }
 
-  // ADD MEMORY MODAL
   function openAddMemoryModal() {
     document.getElementById('add-memory-modal').classList.remove('hidden');
   }
@@ -1681,7 +1615,6 @@
     if (preview) preview.classList.add('hidden');
   }
 
-  // TRIP STORY MODAL
   function toggleTripStoryModal() {
     const modal = document.getElementById('story-modal');
     modal.classList.toggle('hidden');
@@ -1691,7 +1624,6 @@
     showToast('Trip itinerary link copied!', 'ios_share');
   }
 
-  // DARK MODE TOGGLE
   function toggleDarkMode() {
     const html = document.documentElement;
     const isDark = html.classList.toggle('dark');
@@ -1707,7 +1639,6 @@
     showToast(isDark ? 'Dark mode enabled' : 'Light mode enabled', isDark ? 'dark_mode' : 'light_mode');
   }
 
-  // TRIPS SIDEBAR DRAWER INTERACTIVITY
   function toggleTripsDrawer(open) {
     const container = document.getElementById('trips-drawer-container');
     const backdrop = document.getElementById('trips-drawer-backdrop');
@@ -1751,7 +1682,6 @@
     showToast('Creating new expedition logbook...', 'add_circle');
   }
 
-  // TOAST SYSTEM
   let toastTimer = null;
   function showToast(message, icon = 'check_circle') {
     const toast = document.getElementById('toast-notification');
@@ -1771,11 +1701,9 @@
     }, 2800);
   }
 
-  // Initialize Leaflet map on window load
   window.addEventListener('DOMContentLoaded', () => {
     initMap();
 
-    // Accessibility: Escape key closes open modals / drawer
     window.addEventListener('keydown', (e) => {
       if (e.key !== 'Escape') return;
       const openModals = [
@@ -1798,10 +1726,11 @@
       if (closed) e.preventDefault();
     });
 
-    // Keep map sized correctly on resize / orientation change
     window.addEventListener('resize', () => {
       if (map) map.invalidateSize();
     });
   });
 </script>
-</div></body></html>
+</div>
+</body>
+</html>
