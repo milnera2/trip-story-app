@@ -13,6 +13,7 @@ import { PERSON_COLORS } from '../../geo';
 import { categoryIcon } from '../../categories';
 import { dayNumber, plural } from '../../format';
 import { useTrips } from '../../store';
+import { supabase } from '../../supabase';
 import { fonts, useColors } from '../../theme';
 
 export default function MapTab() {
@@ -22,17 +23,28 @@ export default function MapTab() {
   const session = useSession();
   const meId = session.status === 'signedIn' ? session.user.id : '';
   const { active, stops, selectedStopId, setSelectedStopId, loading, members, tracks, recordPoint, refreshMembers } = useTrips();
-  useFocusEffect(useCallback(() => { void refreshMembers(); }, [refreshMembers]));
+  const [ownProfile, setOwnProfile] = useState<{ id: string; name: string; avatar_url: string | null } | null>(null);
+  useFocusEffect(useCallback(() => {
+    void refreshMembers();
+    if (!meId) return;
+    let current = true;
+    supabase.from('profiles').select('id, name, avatar_url').eq('id', meId).single().then(({ data }) => {
+      if (current && data) setOwnProfile(data);
+    });
+    return () => { current = false; };
+  }, [meId, refreshMembers]));
   const [cardHeight, setCardHeight] = useState(210);
 
   const mapStops = useMemo(() => stops.map(({ id, lat, lng, title, category }) => ({ id, lat, lng, title, category })), [stops]);
   const people = useMemo(() => {
-    return members.map((member) => {
-      const me = member.user_id === meId;
+    const travelers = members.filter((member) => member.user_id !== meId).map((member) => {
       const hue = Number.parseInt(member.user_id.slice(0, 8), 16) % (PERSON_COLORS.length - 1);
-      return { id: member.user_id, name: member.name, avatar: member.avatar_url, me, color: me ? c.pin : PERSON_COLORS[hue + 1] };
-    }).sort((a, b) => Number(b.me) - Number(a.me));
-  }, [members, meId, c.pin]);
+      return { id: member.user_id, name: member.name, avatar: member.avatar_url, me: false, color: PERSON_COLORS[hue + 1] };
+    });
+    if (!meId) return travelers;
+    const self = ownProfile?.id === meId ? ownProfile : members.find((member) => member.user_id === meId);
+    return [{ id: meId, name: self?.name || 'You', avatar: self?.avatar_url ?? null, me: true, color: c.pin }, ...travelers];
+  }, [members, ownProfile, meId, c.pin]);
   const shown = stops.find((s) => s.id === selectedStopId) ?? stops[stops.length - 1];
   const bottomInset = cardHeight + TAB_BAR_HEIGHT + insets.bottom + 40;
   const controlsTop = insets.top + 70;
