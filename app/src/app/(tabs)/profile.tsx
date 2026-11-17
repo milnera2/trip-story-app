@@ -4,6 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSession } from '../../auth';
+import { CharacterPicker } from '../../components/CharacterPicker';
 import { Glass } from '../../components/Glass';
 import { ProfilePeople } from '../../components/ProfilePeople';
 import { TAB_BAR_HEIGHT } from '../../components/TabBar';
@@ -24,6 +25,7 @@ export default function ProfileTab() {
   const userId = session.status === 'signedIn' ? session.user.id : null;
   const [profile, setProfile] = useState<{ name: string; handle: string; avatar_url: string | null } | null>(null);
   const [editing, setEditing] = useState(false);
+  const [picking, setPicking] = useState(false);
   const [name, setName] = useState('');
   const [handle, setHandle] = useState('');
   const [busy, setBusy] = useState('');
@@ -66,6 +68,24 @@ export default function ProfileTab() {
     } catch (error) {
       const taken = typeof error === 'object' && error !== null && 'code' in error && error.code === '23505';
       setNotice(taken ? 'That username is taken.' : 'Could not save your profile. Try again.');
+    } finally {
+      setBusy('');
+    }
+  };
+
+  const saveCharacter = async (avatar: string) => {
+    if (!userId || !profile || busy) return;
+    setBusy('photo');
+    setNotice('');
+    try {
+      const { error } = await supabase.from('profiles').update({ avatar_url: avatar }).eq('id', userId);
+      if (error) throw error;
+      setProfile({ ...profile, avatar_url: avatar });
+      setPicking(false);
+      setNotice('Your character is saved. It now appears on the map.');
+      void refreshMembers();
+    } catch {
+      setNotice('Could not save your character. Try again.');
     } finally {
       setBusy('');
     }
@@ -117,14 +137,16 @@ export default function ProfileTab() {
               </View>
               <View style={row}>
                 <ActionButton label={profile.avatar_url ? 'Change photo' : 'Add a photo'} icon="photo-camera" variant="glass" busy={busy === 'photo'} disabled={!!busy} onPress={() => void changePhoto(false)} />
-                {profile.avatar_url ? <ActionButton label="Use initials" variant="glass" disabled={!!busy} onPress={() => void changePhoto(true)} /> : null}
-                {!editing && <ActionButton label="Edit profile" icon="edit" variant="glass" disabled={!!busy} onPress={() => {
+                <ActionButton label="Choose a character" icon="pets" variant="glass" disabled={!!busy} onPress={() => { setEditing(false); setPicking(true); setNotice(''); }} />
+                {profile.avatar_url ? <ActionButton label="Use initials" icon="abc" variant="glass" disabled={!!busy} onPress={() => void changePhoto(true)} /> : null}
+                {!editing && !picking && <ActionButton label="Edit profile" icon="edit" variant="glass" disabled={!!busy} onPress={() => {
                   setName(profile.name);
                   setHandle(profile.handle);
                   setNotice('');
                   setEditing(true);
                 }} />}
               </View>
+              {picking && <CharacterPicker current={profile.avatar_url} busy={busy === 'photo'} onSave={(avatar) => void saveCharacter(avatar)} onCancel={() => setPicking(false)} />}
               {editing && <>
                 <TextArea label="Display name" value={name} onChangeText={setName} multiline={false} maxLength={50} autoCapitalize="words" style={{ color: c.ink, minHeight: 34, fontSize: 17 }} />
                 <TextArea label="Username" value={handle} onChangeText={setHandle} multiline={false} maxLength={25} autoCapitalize="none" autoCorrect={false} style={{ color: c.ink, minHeight: 34, fontSize: 17 }} />
@@ -142,3 +164,4 @@ export default function ProfileTab() {
     </View>
   );
 }
+

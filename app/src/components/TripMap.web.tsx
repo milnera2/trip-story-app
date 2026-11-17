@@ -6,6 +6,9 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { updateSettings, useSettings } from '../settings';
 import { fonts, useColors } from '../theme';
 import { smooth } from '../geo';
+import { characterImage } from '../characterImage';
+import { parseAvatar } from '../characters';
+import { useAvatarImage } from '../useAvatarImage';
 import { paintMap, style } from './mapStyle';
 import type { MapStop, TripMapProps } from './TripMap.types';
 
@@ -25,6 +28,9 @@ const css = `
 .wt-friend{display:flex;flex-direction:column;align-items:center;gap:3px;pointer-events:none}
 .wt-face{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;background:var(--wt-glass) center/cover;border:3px solid var(--ring);
   font:600 16px 'BarlowSemiCondensed_600SemiBold',Barlow,sans-serif;color:var(--wt-ink);box-shadow:0 6px 14px rgba(0,0,0,.35)}
+.wt-face[data-char]{position:relative;width:60px;height:60px;border:0;border-radius:0;background-color:transparent;background-size:contain;background-repeat:no-repeat;background-position:center;box-shadow:none;filter:drop-shadow(0 5px 4px rgba(0,0,0,.4))}
+.wt-face[data-char]::after{content:'';position:absolute;left:14%;right:14%;bottom:-3px;height:9px;border-radius:50%;background:var(--ring);opacity:.6;z-index:-1}
+.wt-avatar[data-char]{left:12px;top:6px;width:72px;height:72px;border:0;border-radius:0;background-color:transparent;background-size:contain;background-repeat:no-repeat;background-position:center;box-shadow:none;filter:drop-shadow(0 5px 4px rgba(0,0,0,.45))}
 .wt-tag{font:600 12px Barlow,sans-serif;color:var(--wt-ink);background:var(--wt-glass);border:1px solid var(--wt-edge);border-radius:10px;padding:1px 7px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wt-me{position:relative;width:96px;height:96px;pointer-events:none}
 .wt-cone{position:absolute;inset:0;background:conic-gradient(from -28deg,color-mix(in srgb,var(--wt-pin) 65%,transparent) 0 56deg,transparent 56deg 360deg);
@@ -107,13 +113,32 @@ export function TripMap({ stops, selectedId, onSelect, onLongPress, controlsTop,
     m.setTerrain(s.terrain3d && !s.topDown ? { source: 'dem', exaggeration: 1.3 } : null);
   };
 
+  // Photo, 3D character or initial. Characters render asynchronously, so the element remembers which one it is waiting for.
+  const paintFace = (face: HTMLElement, avatar: string | null, name: string) => {
+    const key = `${avatar ?? ''}|${name}`;
+    if (face.dataset.key === key) return;
+    face.dataset.key = key;
+    const parsed = parseAvatar(avatar);
+    face.style.backgroundImage = '';
+    face.textContent = '';
+    if (parsed.kind === 'character') {
+      face.setAttribute('data-char', '1');
+      characterImage(parsed.id, parsed.color).then((uri) => {
+        if (uri && face.dataset.key === key) face.style.backgroundImage = `url(${uri})`;
+      });
+      return;
+    }
+    face.removeAttribute('data-char');
+    if (parsed.kind === 'photo') face.style.backgroundImage = `url(${JSON.stringify(parsed.url)})`;
+    else face.textContent = (name.trim()[0] ?? '?').toUpperCase();
+  };
+
   const updateOwnMarker = () => {
     const marker = me.current.marker?.getElement();
     const face = marker?.querySelector<HTMLElement>('.wt-avatar');
     if (!face) return;
     const person = live.current.people?.find((p) => p.me);
-    face.style.backgroundImage = person?.avatar ? `url(${JSON.stringify(person.avatar)})` : '';
-    face.textContent = person && !person.avatar ? (person.name.trim()[0] ?? '?').toUpperCase() : '';
+    paintFace(face, person?.avatar ?? null, person?.name ?? '');
   };
 
   // Saved paths as smooth coloured lines, and a photo marker where each friend was last seen.
@@ -150,8 +175,7 @@ export function TripMap({ stops, selectedId, onSelect, onLongPress, controlsTop,
       el.replaceChildren();
       const face = document.createElement('div');
       face.className = 'wt-face';
-      if (p.avatar) face.style.backgroundImage = `url(${JSON.stringify(p.avatar)})`;
-      else face.textContent = (p.name.trim()[0] ?? '?').toUpperCase();
+      paintFace(face, p.avatar, p.name);
       const tag = document.createElement('div');
       tag.className = 'wt-tag';
       tag.textContent = p.name;
@@ -523,7 +547,7 @@ export function TripMap({ stops, selectedId, onSelect, onLongPress, controlsTop,
     me.current.flying = duration > 0;
   };
 
-  const avatar = people?.find((person) => person.me)?.avatar;
+  const ownAvatar = useAvatarImage(people?.find((person) => person.me)?.avatar);
   const label = { off: 'Find me', wait: 'Locating…', on: following ? 'Following you' : 'Follow me', blocked: 'Try again' }[status];
   const icon = { off: 'my-location', wait: 'sync', on: following ? 'navigation' : 'near-me', blocked: 'location-off' }[status] as 'my-location';
   // Pin where you stand if the player is on the map, otherwise the middle of the screen.
@@ -557,8 +581,8 @@ export function TripMap({ stops, selectedId, onSelect, onLongPress, controlsTop,
               borderColor: c.glassEdge,
             }}
           >
-            {avatar
-              ? <Image source={{ uri: avatar }} style={{ width: 26, height: 26, borderRadius: 13 }} />
+            {ownAvatar.uri
+              ? <Image source={{ uri: ownAvatar.uri }} accessibilityIgnoresInvertColors resizeMode={ownAvatar.character ? 'contain' : 'cover'} style={{ width: 26, height: 26, borderRadius: 13 }} />
               : <MaterialIcons name={icon} size={22} color={status === 'on' && following ? c.onPrimary : c.ink} />}
             <Text style={{ color: status === 'on' && following ? c.onPrimary : c.ink, fontFamily: fonts.label, fontSize: 16 }}>{label}</Text>
           </Pressable>

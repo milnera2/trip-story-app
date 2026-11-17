@@ -2,6 +2,7 @@ import { ComponentProps, ReactNode } from 'react';
 import { ActivityIndicator, Image, Pressable, StyleProp, Text, TextInput, TextInputProps, View, ViewStyle } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { fonts, useColors } from '../theme';
+import { useAvatarImage } from '../useAvatarImage';
 
 export type IconName = ComponentProps<typeof MaterialIcons>['name'];
 
@@ -108,6 +109,7 @@ export function TextArea({ label, ...input }: TextInputProps & { label: string }
 
 export function Avatar({ name, size = 40, url, ring }: { name: string; size?: number; url?: string | null; ring?: string }) {
   const c = useColors();
+  const { uri, character } = useAvatarImage(url);
   const initial = (name.trim()[0] ?? '?').toUpperCase();
   return (
     <View
@@ -118,14 +120,14 @@ export function Avatar({ name, size = 40, url, ring }: { name: string; size?: nu
         borderRadius: size / 2,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: c.chipOn,
+        backgroundColor: character ? `${character}38` : c.chipOn,
         borderWidth: ring ? 2 : 1,
         borderColor: ring ?? c.primary,
         overflow: 'hidden',
       }}
     >
-      {url ? (
-        <Image source={{ uri: url }} accessibilityIgnoresInvertColors style={{ width: size, height: size }} />
+      {uri ? (
+        <Image source={{ uri }} accessibilityIgnoresInvertColors resizeMode={character ? 'contain' : 'cover'} style={{ width: size, height: size }} />
       ) : (
         <Text style={{ color: c.link, fontFamily: fonts.title, fontSize: size * 0.45 }}>{initial}</Text>
       )}
