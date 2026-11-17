@@ -2,10 +2,10 @@ import { useSyncExternalStore } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export type Appearance = 'light' | 'dark';
-export type Settings = { buildings3d: boolean; terrain3d: boolean; trail: boolean; appearance: Appearance };
+export type Settings = { topDown: boolean; buildings3d: boolean; terrain3d: boolean; trail: boolean; appearance: Appearance };
 
 const KEY = 'waytrip.settings';
-let current: Settings = { buildings3d: true, terrain3d: true, trail: true, appearance: 'light' };
+let current: Settings = { topDown: false, buildings3d: true, terrain3d: true, trail: true, appearance: 'light' };
 const listeners = new Set<() => void>();
 
 AsyncStorage.getItem(KEY)

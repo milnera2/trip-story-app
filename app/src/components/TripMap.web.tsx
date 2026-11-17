@@ -3,7 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { MaterialIcons } from '@expo/vector-icons';
-import { useSettings } from '../settings';
+import { updateSettings, useSettings } from '../settings';
 import { fonts, useColors } from '../theme';
 import { smooth } from '../geo';
 import { paintMap, style } from './mapStyle';
@@ -99,9 +99,9 @@ export function TripMap({ stops, selectedId, onSelect, onLongPress, controlsTop,
     const m = map.current;
     if (!m || !ready.current) return;
     const s = live.current.settings;
-    m.setLayoutProperty('buildings', 'visibility', s.buildings3d ? 'visible' : 'none');
+    m.setLayoutProperty('buildings', 'visibility', s.buildings3d && !s.topDown ? 'visible' : 'none');
     m.setLayoutProperty('trail-line', 'visibility', s.trail && !live.current.recording ? 'visible' : 'none');
-    m.setTerrain(s.terrain3d ? { source: 'dem', exaggeration: 1.3 } : null);
+    m.setTerrain(s.terrain3d && !s.topDown ? { source: 'dem', exaggeration: 1.3 } : null);
   };
 
   const updateOwnMarker = () => {
@@ -191,14 +191,15 @@ export function TripMap({ stops, selectedId, onSelect, onLongPress, controlsTop,
     if (!m || !ready.current || me.current.following) return;
     const { stops: list, topInset: top, bottomInset: bottom } = live.current;
     const duration = animate && !reduced() ? 2400 : 0;
+    const { topDown } = live.current.settings;
     if (list.length === 0) {
       m.easeTo({ center: [-35, 22], zoom: 1.4, pitch: 0, bearing: 0, duration, padding: { top, bottom, left: 0, right: 0 } });
     } else if (list.length === 1) {
-      m.easeTo({ center: [list[0].lng, list[0].lat], zoom: 9.5, pitch: 62, bearing: -25, duration, padding: { top, bottom, left: 0, right: 0 } });
+      m.easeTo({ center: [list[0].lng, list[0].lat], zoom: 9.5, pitch: topDown ? 0 : 62, bearing: topDown ? 0 : -25, duration, padding: { top, bottom, left: 0, right: 0 } });
     } else {
       const b = new maplibregl.LngLatBounds();
       list.forEach((s) => b.extend([s.lng, s.lat]));
-      m.fitBounds(b, { padding: { top: top + 40, bottom: bottom + 40, left: 50, right: 50 }, pitch: 60, bearing: -20, maxZoom: 11, duration });
+      m.fitBounds(b, { padding: { top: top + 40, bottom: bottom + 40, left: 50, right: 50 }, pitch: topDown ? 0 : 60, bearing: topDown ? 0 : -20, maxZoom: 11, duration });
     }
   };
 
@@ -211,7 +212,8 @@ export function TripMap({ stops, selectedId, onSelect, onLongPress, controlsTop,
     m.easeTo({
       center: p.shown,
       zoom: zoom ?? Math.max(m.getZoom(), 16.5),
-      pitch: 66,
+      pitch: live.current.settings.topDown ? 0 : 66,
+      bearing: live.current.settings.topDown ? 0 : m.getBearing(),
       padding: { top: Math.round(m.getContainer().clientHeight * 0.25), bottom: live.current.bottomInset, left: 0, right: 0 },
       duration,
     });
@@ -345,7 +347,7 @@ export function TripMap({ stops, selectedId, onSelect, onLongPress, controlsTop,
       if ((e.target as HTMLElement).closest('.wt-pin')) return;
       fingers.add(e.pointerId);
       cancel();
-      if (fingers.size !== 1) return;
+      if (fingers.size !== 1 || live.current.settings.topDown) return;
       start = { x: e.clientX, y: e.clientY };
       timer = setTimeout(() => {
         // Held still: this drag turns the view instead of moving it.
@@ -404,7 +406,10 @@ export function TripMap({ stops, selectedId, onSelect, onLongPress, controlsTop,
         if (p.cone) p.cone.style.opacity = p.heading === null ? '0' : '1';
         if (p.following && !p.flying && !p.manualBearing) {
           const diff = p.heading === null ? 0 : ((p.heading - bearing + 540) % 360) - 180;
-          m.jumpTo({ center: p.shown, bearing: bearing + diff * (1 - Math.exp(-dt / 700)) });
+          m.jumpTo({
+            center: p.shown,
+            bearing: live.current.settings.topDown ? 0 : bearing + diff * (1 - Math.exp(-dt / 700)),
+          });
         }
       }
       raf = requestAnimationFrame(loop);
@@ -460,12 +465,23 @@ export function TripMap({ stops, selectedId, onSelect, onLongPress, controlsTop,
       map.current.easeTo({
         center: [s.lng, s.lat],
         zoom: Math.max(map.current.getZoom(), 10.5),
-        pitch: 65,
+        pitch: live.current.settings.topDown ? 0 : 65,
+        bearing: live.current.settings.topDown ? 0 : map.current.getBearing(),
         duration: reduced() ? 0 : 1400,
         padding: { top: live.current.topInset, bottom: live.current.bottomInset, left: 0, right: 0 },
       });
     }
   }, [selectedId]);
+
+  const switchView = () => {
+    const topDown = !settings.topDown;
+    updateSettings({ topDown });
+    const m = map.current;
+    if (!m) return;
+    const duration = reduced() ? 0 : 450;
+    m.easeTo({ pitch: topDown ? 0 : 60, bearing: topDown ? 0 : m.getBearing(), duration });
+    me.current.flying = duration > 0;
+  };
 
   const label = { off: 'Find me', wait: 'Locating…', on: following ? 'Following you' : 'Follow me', blocked: 'Try again' }[status];
   const icon = { off: 'my-location', wait: 'sync', on: following ? 'navigation' : 'near-me', blocked: 'location-off' }[status] as 'my-location';
@@ -502,6 +518,17 @@ export function TripMap({ stops, selectedId, onSelect, onLongPress, controlsTop,
           >
             <MaterialIcons name={icon} size={22} color={status === 'on' && following ? c.onPrimary : c.ink} />
             <Text style={{ color: status === 'on' && following ? c.onPrimary : c.ink, fontFamily: fonts.label, fontSize: 16 }}>{label}</Text>
+          </Pressable>
+          <Pressable
+            onPress={switchView}
+            accessibilityRole="button"
+            accessibilityLabel={settings.topDown ? 'Switch to 3D view' : 'Switch to top-down view'}
+            style={{ minHeight: 48, paddingHorizontal: 18, borderRadius: 24, flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: c.glassSolid, borderWidth: 1, borderColor: c.glassEdge }}
+          >
+            <MaterialIcons name={settings.topDown ? 'terrain' : 'map'} size={22} color={c.ink} />
+            <Text style={{ color: c.ink, fontFamily: fonts.label, fontSize: 16 }}>
+              {settings.topDown ? '3D view' : 'Top-down'}
+            </Text>
           </Pressable>
           {status === 'on' && onRecord ? (
             <Pressable
