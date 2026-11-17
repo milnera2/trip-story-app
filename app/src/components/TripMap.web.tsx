@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Image, Pressable, Text, View } from 'react-native';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -31,9 +31,10 @@ const css = `
   -webkit-mask:radial-gradient(circle,transparent 12px,#000 14px,transparent 48px);mask:radial-gradient(circle,transparent 12px,#000 14px,transparent 48px)}
 .wt-halo{position:absolute;left:34px;top:34px;width:28px;height:28px;border-radius:50%;background:color-mix(in srgb,var(--wt-pin) 40%,transparent);animation:wt-pulse 2s ease-out infinite}
 .wt-shadow{position:absolute;left:36px;top:52px;width:24px;height:10px;border-radius:50%;background:rgba(0,0,0,.4);filter:blur(3px)}
-.wt-avatar{position:absolute;left:32px;top:32px;width:32px;height:32px;border-radius:50%;background:var(--wt-pin) center/cover;
+.wt-avatar{position:absolute;left:24px;top:24px;width:48px;height:48px;box-sizing:border-box;padding:0;border-radius:50%;background:var(--wt-pin) center/cover;pointer-events:auto;cursor:pointer;touch-action:manipulation;
   display:grid;place-items:center;color:var(--wt-onpin);font:700 13px Barlow,sans-serif;
   border:3px solid #fff;box-shadow:0 0 18px color-mix(in srgb,var(--wt-pin) 85%,transparent),0 4px 8px rgba(0,0,0,.45)}
+.wt-avatar:focus-visible{outline:3px solid var(--wt-link);outline-offset:3px}
 @keyframes wt-pulse{0%{transform:scale(.8);opacity:.9}100%{transform:scale(2.4);opacity:0}}
 @media (prefers-reduced-motion:reduce){.wt-halo{animation:none}}
 `;
@@ -87,6 +88,8 @@ export function TripMap({ stops, selectedId, onSelect, onLongPress, controlsTop,
     marker: null as maplibregl.Marker | null,
     cone: null as HTMLElement | null,
     watch: null as number | null,
+    followOnFix: false,
+    pendingFix: null as GeolocationPosition | null,
     lastSaved: null as [number, number] | null,
   });
 
@@ -224,7 +227,10 @@ export function TripMap({ stops, selectedId, onSelect, onLongPress, controlsTop,
   const onFix = (pos: GeolocationPosition) => {
     const m = map.current;
     const p = me.current;
-    if (!m || !ready.current) return;
+    if (!m || !ready.current) {
+      p.pendingFix = pos;
+      return;
+    }
     const at: [number, number] = [pos.coords.longitude, pos.coords.latitude];
     const prev = p.target;
     const step = prev ? move(prev, at) : null;
@@ -246,14 +252,22 @@ export function TripMap({ stops, selectedId, onSelect, onLongPress, controlsTop,
       p.shown = at;
       const el = document.createElement('div');
       el.className = 'wt-me';
-      el.setAttribute('role', 'img');
-      el.setAttribute('aria-label', 'Your location');
-      el.innerHTML = '<div class="wt-cone"></div><div class="wt-halo"></div><div class="wt-shadow"></div><div class="wt-avatar"></div>';
+      el.innerHTML = '<div class="wt-cone"></div><div class="wt-halo"></div><div class="wt-shadow"></div><button type="button" class="wt-avatar" aria-label="Go to your location" title="Go to your location"></button>';
+      const button = el.querySelector('button');
+      button?.addEventListener('pointerdown', (event) => event.stopPropagation());
+      button?.addEventListener('click', (event) => {
+        event.stopPropagation();
+        p.manualBearing = false;
+        setFollow(true);
+        chase();
+      });
       p.cone = el.querySelector('.wt-cone');
       p.marker = new maplibregl.Marker({ element: el }).setLngLat(at).addTo(m);
       updateOwnMarker();
-      setStatus('on');
-      setHint('');
+    }
+    setStatus('on');
+    if (p.followOnFix) {
+      p.followOnFix = false;
       setFollow(true);
       chase();
     }
@@ -268,18 +282,33 @@ export function TripMap({ stops, selectedId, onSelect, onLongPress, controlsTop,
       chase();
       return;
     }
-    if (status === 'wait') return;
-    if (!('geolocation' in navigator)) {
-      setStatus('blocked');
-      return setHint('This browser cannot share your location.');
+    if (status !== 'wait') startLocationWatch(true);
+  };
+
+  const startLocationWatch = (follow: boolean) => {
+    const p = me.current;
+    if (follow) {
+      p.followOnFix = true;
+      setStatus('wait');
+      setHint('');
     }
-    setStatus('wait');
-    setHint('');
-    if (me.current.watch !== null) navigator.geolocation.clearWatch(me.current.watch);
-    me.current.watch = navigator.geolocation.watchPosition(
+    if (!('geolocation' in navigator)) {
+      if (follow) {
+        setStatus('blocked');
+        setHint('This browser cannot share your location.');
+      }
+      return;
+    }
+    if (p.watch !== null) return;
+    p.watch = navigator.geolocation.watchPosition(
       onFix,
       (err) => {
-        // Code 1 means the person or the browser said no. Anything else is a signal problem, so just try again.
+        if (p.watch !== null) navigator.geolocation.clearWatch(p.watch);
+        p.watch = null;
+        if (!p.followOnFix) {
+          setStatus('off');
+          return;
+        }
         setStatus(err.code === 1 ? 'blocked' : 'off');
         setHint(
           err.code === 1
@@ -329,6 +358,16 @@ export function TripMap({ stops, selectedId, onSelect, onLongPress, controlsTop,
       drawCrew();
       draw();
       frame(true);
+      const pending = me.current.pendingFix;
+      if (pending) {
+        me.current.pendingFix = null;
+        onFix(pending);
+      }
+      if (live.current.people && navigator.permissions) {
+        navigator.permissions.query({ name: 'geolocation' }).then(({ state }) => {
+          if (state === 'granted' && map.current === m) startLocationWatch(false);
+        }).catch(() => {});
+      }
     });
 
     // One finger (or the mouse) drags the map. Press and hold still for a moment, then drag, to turn
@@ -423,6 +462,7 @@ export function TripMap({ stops, selectedId, onSelect, onLongPress, controlsTop,
       window.removeEventListener('pointerup', up);
       window.removeEventListener('pointercancel', up);
       if (me.current.watch !== null) navigator.geolocation.clearWatch(me.current.watch);
+      me.current.watch = null;
       markers.current.forEach((k) => k.remove());
       crew.current.forEach((k) => k.remove());
       crew.current.clear();
@@ -483,6 +523,7 @@ export function TripMap({ stops, selectedId, onSelect, onLongPress, controlsTop,
     me.current.flying = duration > 0;
   };
 
+  const avatar = people?.find((person) => person.me)?.avatar;
   const label = { off: 'Find me', wait: 'Locating…', on: following ? 'Following you' : 'Follow me', blocked: 'Try again' }[status];
   const icon = { off: 'my-location', wait: 'sync', on: following ? 'navigation' : 'near-me', blocked: 'location-off' }[status] as 'my-location';
   // Pin where you stand if the player is on the map, otherwise the middle of the screen.
@@ -516,7 +557,9 @@ export function TripMap({ stops, selectedId, onSelect, onLongPress, controlsTop,
               borderColor: c.glassEdge,
             }}
           >
-            <MaterialIcons name={icon} size={22} color={status === 'on' && following ? c.onPrimary : c.ink} />
+            {avatar
+              ? <Image source={{ uri: avatar }} style={{ width: 26, height: 26, borderRadius: 13 }} />
+              : <MaterialIcons name={icon} size={22} color={status === 'on' && following ? c.onPrimary : c.ink} />}
             <Text style={{ color: status === 'on' && following ? c.onPrimary : c.ink, fontFamily: fonts.label, fontSize: 16 }}>{label}</Text>
           </Pressable>
           <Pressable
