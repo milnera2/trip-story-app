@@ -31,7 +31,7 @@ export default function Join() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.page, justifyContent: 'center', padding: 16 }}>
-      <Still />
+      <Still index={1} />
       <Glass pad={22} style={{ maxWidth: 440, width: '100%', alignSelf: 'center' }}>
         <View style={{ gap: 12 }}>
           <Heading size={30}>Join a trip</Heading>

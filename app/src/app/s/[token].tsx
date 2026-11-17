@@ -45,7 +45,7 @@ export default function Story() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.page }}>
-      <Still />
+      <Still index={1} />
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 20, paddingBottom: insets.bottom + 40, paddingHorizontal: 16, gap: 16, width: '100%', maxWidth: 640, alignSelf: 'center' }}>
         <Text style={{ color: c.link, fontFamily: fonts.wordmark, fontSize: 24 }}>WayStory</Text>
         {failed ? <Body dim>This story link is not valid.</Body> : null}

@@ -114,7 +114,7 @@ export default function TripDetail() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.page }}>
-      <Still />
+      <Still index={3} />
       <ScrollView
         contentContainerStyle={{ paddingTop: insets.top + 16, paddingBottom: insets.bottom + 60, paddingHorizontal: 16, gap: 16, width: '100%', maxWidth: 560, alignSelf: 'center' }}
       >

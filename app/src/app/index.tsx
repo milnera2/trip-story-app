@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Animated, { FadeInDown, ReduceMotion } from 'react-native-reanimated';
 import { useSession } from '../auth';
 import { AuthForm, Credentials } from '../components/AuthForm';
-import { LoginBackdrop } from '../components/LoginBackdrop';
+import { PhotoBackdrop } from '../components/PhotoBackdrop';
 import { Snackbar } from '../components/controls';
 import { supabase } from '../supabase';
 import { ForceMode, fonts, useColors } from '../theme';
@@ -97,7 +97,7 @@ function EntryScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.page }}>
-      <LoginBackdrop />
+      <PhotoBackdrop />
       {session.status === 'signedOut' && (
         <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }} enabled={Platform.OS !== 'web'}>
           <ScrollView

@@ -19,7 +19,7 @@ export default function TripsTab() {
 
   return (
     <View style={{ flex: 1, backgroundColor: c.page }}>
-      <Still />
+      <Still index={0} />
       <ScrollView
         contentContainerStyle={{
           paddingTop: insets.top + 24,
