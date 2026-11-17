@@ -1,4 +1,4 @@
-[Open WayStory in your browser](https://milnera2.github.io/trip-story-app/waystory/)
+<https://milnera2.github.io/trip-story-app/waystory/>
 
 Project for ASE330 - Waystory
 
