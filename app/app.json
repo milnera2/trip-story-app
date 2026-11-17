@@ -1,0 +1,30 @@
+{
+  "expo": {
+    "name": "WayStory",
+    "slug": "waystory",
+    "scheme": "waystory",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "plugins": [
+      "expo-router",
+      "expo-video"
+    ],
+    "android": {
+      "package": "com.waystory.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#DCE9CF",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": true
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png"
+    }
+  }
+}
