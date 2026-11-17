@@ -1,0 +1,11 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><title>Page not found</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+  const base = "/trip-story-app/waystory/";
+  if (location.pathname.startsWith(base) && location.pathname !== base) {
+    const route = location.pathname.slice(base.length) + location.search + location.hash;
+    location.replace(base + '?route=' + encodeURIComponent(route));
+  }
+</script>
+<h1>Page not found</h1><p><a href="/trip-story-app/waystory/">Open WayStory</a></p></html>

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
-import * as Linking from 'expo-linking';
+import { tripLink } from '../tripLinks';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSession } from '../auth';
 import { Glass } from './Glass';
@@ -24,7 +24,7 @@ export function TripCard({ trip }: { trip: TripRow }) {
   const isOwner = session.status === 'signedIn' && session.user.id === trip.owner_id;
 
   const share = async () => {
-    await Clipboard.setStringAsync(Linking.createURL(`s/${trip.share_token}`));
+    await Clipboard.setStringAsync(tripLink('s', trip.share_token));
     setNote('Story link copied. Anyone with it can read the trip.');
   };
 

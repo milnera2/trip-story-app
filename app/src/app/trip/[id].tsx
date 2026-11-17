@@ -3,7 +3,7 @@ import { useLeave } from '../../leave';
 import { Image, ScrollView, Text, View } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import * as Clipboard from 'expo-clipboard';
-import * as Linking from 'expo-linking';
+import { tripLink } from '../../tripLinks';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useSession } from '../../auth';
@@ -109,8 +109,8 @@ export default function TripDetail() {
   }
   if (!trip) return <View style={{ flex: 1, backgroundColor: c.page }} />;
 
-  const inviteLink = Linking.createURL(`join/${trip.invite_token}`);
-  const storyLink = Linking.createURL(`s/${trip.share_token}`);
+  const inviteLink = tripLink('join', trip.invite_token);
+  const storyLink = tripLink('s', trip.share_token);
 
   return (
     <View style={{ flex: 1, backgroundColor: c.page }}>

@@ -25,6 +25,9 @@
       "bundler": "metro",
       "output": "single",
       "favicon": "./assets/favicon.png"
+    },
+    "experiments": {
+      "baseUrl": "/trip-story-app/waystory"
     }
   }
 }
