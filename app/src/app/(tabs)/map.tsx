@@ -8,7 +8,7 @@ import { useSession } from '../../auth';
 import { Glass } from '../../components/Glass';
 import { TAB_BAR_HEIGHT } from '../../components/TabBar';
 import { TripMap } from '../../components/TripMap';
-import { ActionButton, Avatar, Body, Heading } from '../../components/ui';
+import { ActionButton, Avatar, Body } from '../../components/ui';
 import { PERSON_COLORS } from '../../geo';
 import { categoryIcon } from '../../categories';
 import { dayNumber, plural } from '../../format';
@@ -22,7 +22,7 @@ export default function MapTab() {
   const insets = useSafeAreaInsets();
   const session = useSession();
   const meId = session.status === 'signedIn' ? session.user.id : '';
-  const { active, stops, selectedStopId, setSelectedStopId, loading, members, tracks, recordPoint, refreshMembers } = useTrips();
+  const { active, stops, selectedStopId, setSelectedStopId, members, tracks, recordPoint, refreshMembers } = useTrips();
   const [ownProfile, setOwnProfile] = useState<{ id: string; name: string; avatar_url: string | null } | null>(null);
   useFocusEffect(useCallback(() => {
     void refreshMembers();
@@ -33,7 +33,7 @@ export default function MapTab() {
     });
     return () => { current = false; };
   }, [meId, refreshMembers]));
-  const [cardHeight, setCardHeight] = useState(210);
+  const [cardHeight, setCardHeight] = useState(110);
 
   const mapStops = useMemo(() => stops.map(({ id, lat, lng, title, category }) => ({ id, lat, lng, title, category })), [stops]);
   const people = useMemo(() => {
@@ -46,7 +46,7 @@ export default function MapTab() {
     return [{ id: meId, name: self?.name || 'You', avatar: self?.avatar_url ?? null, me: true, color: c.pin }, ...travelers];
   }, [members, ownProfile, meId, c.pin]);
   const shown = stops.find((s) => s.id === selectedStopId) ?? stops[stops.length - 1];
-  const bottomInset = cardHeight + TAB_BAR_HEIGHT + insets.bottom + 40;
+  const bottomInset = TAB_BAR_HEIGHT + insets.bottom + (active ? cardHeight + 22 : 12);
   const controlsTop = insets.top + 70;
   const topInset = insets.top + 190;
 
@@ -86,29 +86,21 @@ export default function MapTab() {
         </Pressable>
       </View>
 
-      <View
-        pointerEvents="box-none"
-        style={{ position: 'absolute', left: 12, right: 12, bottom: insets.bottom + TAB_BAR_HEIGHT + 22, alignItems: 'center' }}
-      >
-        <Animated.View
-          entering={FadeInDown.delay(300).duration(500).reduceMotion(ReduceMotion.System)}
-          onLayout={(e) => setCardHeight(e.nativeEvent.layout.height)}
-          style={{ width: '100%', maxWidth: 440 }}
+      {active ? (
+        <View
+          pointerEvents="box-none"
+          style={{ position: 'absolute', left: 12, right: 12, bottom: insets.bottom + TAB_BAR_HEIGHT + 10, alignItems: 'center' }}
         >
-          <Glass pad={18}>
-            {loading ? (
-              <Body dim>Loading your trips</Body>
-            ) : !active ? (
-              <View style={{ gap: 12 }}>
-                <Heading size={28}>Start your first trip</Heading>
-                <Body dim>Pin stops with photos and notes. Friends can join and add their own.</Body>
-                <ActionButton label="Start a trip" icon="add" onPress={() => router.push('/new-trip')} />
-              </View>
-            ) : (
-              <View style={{ gap: 12 }}>
+          <Animated.View
+            entering={FadeInDown.delay(300).duration(500).reduceMotion(ReduceMotion.System)}
+            onLayout={(e) => setCardHeight(e.nativeEvent.layout.height)}
+            style={{ width: '100%', maxWidth: 380 }}
+          >
+            <Glass pad={10} radius={20}>
+              <View style={{ gap: 8 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                   <View style={{ flex: 1 }}>
-                    <Text numberOfLines={1} accessibilityRole="header" style={{ color: c.ink, fontFamily: fonts.wordmark, fontSize: 26 }}>
+                    <Text numberOfLines={1} accessibilityRole="header" style={{ color: c.ink, fontFamily: fonts.wordmark, fontSize: 23 }}>
                       {active.title}
                     </Text>
                     <Body dim>
@@ -118,7 +110,7 @@ export default function MapTab() {
                   <View accessibilityLabel={`${plural(people.length, 'traveler')} on this trip`} style={{ flexDirection: 'row' }}>
                     {people.slice(0, 4).map((p, i) => (
                       <View key={p.id} style={{ marginLeft: i === 0 ? 0 : -10 }}>
-                        <Avatar name={p.name} size={34} url={p.avatar} ring={p.color} />
+                        <Avatar name={p.name} size={30} url={p.avatar} ring={p.color} />
                       </View>
                     ))}
                   </View>
@@ -138,13 +130,12 @@ export default function MapTab() {
                       ) : null}
                     </View>
                   </View>
-                ) : (
-                  <Body dim>No stops yet. Add one, or tap Drop pin.</Body>
-                )}
+                ) : null}
                 <View style={{ flexDirection: 'row', gap: 10 }}>
-                  <ActionButton label="Add stop" icon="add-location-alt" onPress={() => addStop()} style={{ flex: 1.2 }} />
+                  <ActionButton label="Add stop" icon="add-location-alt" small onPress={() => addStop()} style={{ flex: 1.2 }} />
                   <ActionButton
                     label="Timeline"
+                    small
                     icon="timeline"
                     variant="glass"
                     onPress={() => router.push({ pathname: '/trip/[id]', params: { id: active.id } })}
@@ -152,10 +143,10 @@ export default function MapTab() {
                   />
                 </View>
               </View>
-            )}
-          </Glass>
-        </Animated.View>
-      </View>
+            </Glass>
+          </Animated.View>
+        </View>
+      ) : null}
     </View>
   );
 }
